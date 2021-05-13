@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Error{% endblock %}
+{% block head %}
+  {{ super() }}
+{% endblock %}
+
+{% block content %}
+    <h5 style="text-align: center;">Error: {{error}}</h5>
+    <p></p>
+{% endblock %}

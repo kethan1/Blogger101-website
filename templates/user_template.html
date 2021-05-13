@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}User {{ results_from_user["username"] }}{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block content %}
+    {% if results_from_user %}
+        <div style="text-align: center;" class="container">
+            <p>Name: {{ results_from_user["first_name"] }} {{ results_from_user["last_name"] }}</p>
+            <p>Display Name (Username): {{ results_from_user["username"] }}</p>
+        </div>
+    {% else %}
+        <div style="text-align: center;" class="container">
+            <p>User Not Found</p>
+        </div>
+    {% endif %}
+{% endblock %}

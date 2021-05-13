@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block extra_in_head %}
+    <script src="{{ url_for('static', filename='show_password.js') }}"></script>
+{% endblock %}
+
+{% block sign_up_link_nav %}
+	<li><a style="color: #2388db;" href="/sign_up">Sign Up</a></li>
+{% endblock %}
+
+{% block sign_up_link_nav2 %}
+	<li><a style="color: #2388db;" href="/sign_up">Sign Up</a></li>
+{% endblock %}
+
+{% block content %}
+    <div style="text-align: center;" class="container">
+        <form method="POST" style="display: inline-block; text-align: center; width: 100%">
+            <div style="border: 2px solid gray; border-radius: 0.5vw; text-align: center;">
+                <div class="input-field">
+                    <i class="material-icons prefix unselectable">account_circle</i>
+                    <input id="first_name" type="text" name="first_name" required>
+                    <label for="first_name">First Name</label>
+                </div>
+                <div class="input-field">
+                    <i class="material-icons prefix unselectable">account_circle</i>
+                    <input id="last_name" type="text" name="last_name" required>
+                    <label for="last_name">Last Name</label>
+                </div>
+                <div class="input-field">
+                    <i class="material-icons prefix unselectable">account_circle</i>
+                    <input id="username" type="text" name="username" required>
+                    <label for="username">Username</label>
+                </div>
+                <div class="input-field">
+                    <i class="material-icons prefix unselectable">email</i>
+                    <input id="email" class=" validate" type="email" name="email" required>
+                    <label for="email">Email</label>
+                </div>
+                <div class="input-field">
+                    <a onclick="ShowPassword('password')"><i class="required unselectable postfix mdi mdi-arrow-right material-icons" style="color: black;">remove_red_eye</i></a>
+                    <i class="material-icons prefix unselectable">lock</i>
+                    <input id="password" type="password" name="password" required>
+                    <label for="password">Password</label>
+                </div>
+                <div class="input-field">
+                    <a onclick="ShowPassword('confirm_password')"><i class="required unselectable postfix mdi mdi-arrow-right material-icons" style="color: black;">remove_red_eye</i></a>
+                    <i class="material-icons prefix unselectable">lock</i>
+                    <input id="confirm_password" type="password" name="confirm_password" required>
+                    <label for="confirm_password">Confirm Password</label>
+                </div>
+                <button style="z-index: 1; background: black; color: white" class="waves-effect waves-light btn">Register</button>
+                <br>
+                <br>
+            </div>
+        </form>
+    </div>
+{% endblock %}

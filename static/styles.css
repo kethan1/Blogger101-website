@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Recursive:wght@300;375&display=swap');
+
+*:not(i) {
+    font-family: 'Recursive', sans-serif;;
+}
+
+.input-field .postfix~input {
+    width: 80%;
+    width: calc(100% - 3rem);
+    margin-left: 0px;
+    margin-right: 3rem !important;
+}
+.input-field .postfix {
+    position: absolute;
+    width: 3rem;
+    right: 0px;
+}
+
+.unselectable {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}

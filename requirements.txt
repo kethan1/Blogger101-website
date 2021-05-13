@@ -1,0 +1,9 @@
+flask
+flask-pymongo
+flask-compress
+flask-cors
+werkzeug
+datetime
+dnspython
+gunicorn
+pyimgur

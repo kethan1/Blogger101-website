@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Blogs{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block blogs_link_nav %}
+	<li><a style="color: #2388db;" href="/">Blogs</a></li>
+{% endblock %}
+
+{% block blogs_link_nav2 %}
+	<li><a style="color: #2388db;" href="/">Blogs</a></li>
+{% endblock %}
+
+{% block content %}
+    <script>
+        function PostBlog() {
+            if ("{{login_status|safe}}" !== "None") {
+                window.location.href = "/post_blog"
+            } else {
+                M.toast({
+                    html: '<span>Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Post a Blog</span><button class="btn-flat toast-action" style="color: white;" onclick="M.Toast.dismissAll();">X</button>',
+                    classes: 'rounded'
+                });
+            }
+        };
+    </script>
+    <div style="text-align: right; margin-right: 1vw;">
+        <a onclick="PostBlog()" style="cursor: pointer;">New Blog</a>
+    </div>
+    <div style="display: flex; flex-wrap: wrap;">
+        {% for blog in find_blogs() %}
+            <div onclick="window.location=`{{ blog['link'] }}`" style="cursor: pointer; margin: 1em; border: 2px solid lightgray; padding: 0.5vw; padding-bottom: 4em; text-align: center; width: 18em" class="z-depth-2">
+                <h5 style="word-wrap: break-word; max-width: 12em;">{{ blog['title'] }}</h5>
+                <p>Published: {{ blog['date_released'] }}</p>
+                <p>Posted By: <a style="text-decoration: underline;" href='/user/{{ blog["user"] }}'>{{ blog["user"] }}</a></p>
+                <img src="{{ blog['image'] }}" style="width: 12em; ">
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

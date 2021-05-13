@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %} Blog - {{ results["title"] }} {% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block extra_in_head %}
+    <script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2/webcomponents-loader.min.js"></script>
+    <!-- Load the element definition -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@next/dist/zero-md.min.js"></script>
+{% endblock %}
+
+{% block blogs_link_nav %}
+	<li><a style="color: #2388db;" href="/">Blogs</a></li>
+{% endblock %}
+
+{% block blogs_link_nav2 %}
+	<li><a style="color: #2388db;" href="/">Blogs</a></li>
+{% endblock %}
+
+{% block content %}
+    <div style="display: flex; justify-content: space-between;">
+        <span style="margin-left: 1%">Posted On: {{ results["date_released"] }}</span>
+        <span style="margin-right: 1%">Posted By: <a style="text-decoration: underline;" href='/user/{{ results["user"] }}'>{{ results["user"] }}</a></span>
+    </div>
+    <br>
+    <div class="container">
+        <zero-md> 
+            <script type="text/markdown" data-dedent>
+                {{ results["text"] }}
+            </script>
+        </zero-md>
+        <a onclick="PostCommentandSwitch(switchCommentTypetoMain=true);" style="cursor: default">Respond to This Blog</a>
+        <br>
+        <br>
+        <br>
+        <div id="comments"></div>
+        <div id="containsMainInput" class="input-field">
+            <i class="material-icons prefix unselectable">comment</i>
+            <input onKeyDown="if(event.keyCode==13) PostCommentandSwitch();" id="comment_input" name="comment" type="text">
+            <label for="comment_input">Comment</label>
+        </div>
+        <a onclick="PostCommentandSwitch();" class="waves-effect waves-light btn">Post Comment</a>
+        <br>
+        <br>
+        <script>
+            var main = true;
+            var id = null;
+            function PostCommentandSwitch(switchCommentTypetoMain = false, switchCommentTypetoSub = false) {
+                if (switchCommentTypetoMain) {
+                    main = true;
+                    id = null;
+                    document.getElementById("containsMainInput").style.left = "0vw";
+                } else if (switchCommentTypetoSub) {
+                    main = false;
+                    id = event.target.id;
+                    document.getElementById("containsMainInput").style.left = "5vw";
+                } else if (main) {
+                    if ("{{login_status|safe}}" !== "None") {
+                        loginStatusDict = JSON.parse(`{{login_status|tojson}}`);
+                        fetch("/api/add_comment", {
+                            headers : {"content-type" : "application/json; charset=UTF-8"},
+                            method : "POST",
+                            body : JSON.stringify(
+                                {
+                                    "blog_title": "{{ results['title'] }}",
+                                    "type": "main",
+                                    "comment_content": "&zwnj;"+String(document.getElementById("comment_input").value),
+                                    "user": loginStatusDict["username"]
+                                }
+                            )
+                        })
+                        .then(async (response) => {
+                            await window.location.reload(false);
+                        });
+                    } else {
+                        M.toast({
+                            html: '<span>Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Post a Comment</span><button class="btn-flat toast-action" style="color: white;" onclick="M.Toast.dismissAll();">X</button>',
+                            classes: 'rounded'
+                        });
+                    };
+                } else {
+                    if ("{{login_status|safe}}" !== "None") {
+                        loginStatusDict = JSON.parse(`{{login_status|tojson}}`);
+                        fetch("/api/add_comment", {
+                            headers : {"content-type" : "application/json; charset=UTF-8"},
+                            method : "POST",
+                            body : JSON.stringify(
+                                {
+                                    "blog_title": "{{ results['title'] }}",
+                                    "type": "sub",
+                                    "comment_content": "&zwnj;"+String(document.getElementById("comment_input").value),
+                                    "user": loginStatusDict["username"],
+                                    "id": id
+                                }
+                            )
+                        })
+                        .then(async (response) => {
+                            await window.location.reload(false);
+                        });
+                    } else {
+                        M.toast({
+                            html: '<span>Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Post a Comment</span><button class="btn-flat toast-action" style="color: white;" onclick="M.Toast.dismissAll();">X</button>',
+                            classes: 'rounded'
+                        });
+                    };
+                }
+            }
+
+            const commentsElement = document.getElementById('comments');
+            fetch("/api/get_blog_comments", {
+                headers : {"content-type" : "application/json; charset=UTF-8"},
+                body : JSON.stringify({"blog_title": "{{ results['title'] }}"}),
+                method : "POST"
+            })
+            .then(async (response) => {
+                var responseInJson_all = await response.json();
+                var responseInJson = responseInJson_all["found"];
+                for (let i = 0; i < responseInJson.length; i++) {
+                    commentsElement.insertAdjacentHTML('beforeend', `<zero-md>
+                        <script type="text/markdown" data-dedent>
+                            ${responseInJson[i][0]} - <a style="text-decoration: underline;" href="/user/${responseInJson[i][1]}">${responseInJson[i][1]}<\/a><br>
+                        <\/script>
+                    <\/zero-md>
+                    <p id="${responseInJson[i][2]}" style="cursor: default; color: #039BE5" onclick="PostCommentandSwitch(switchCommentTypetoMain=false, switchCommentTypetoSub=true)">Respond To This Comment</p>`);
+                    var lstOfSubcomments = responseInJson[i][3];
+                    for (let x = 0; x < lstOfSubcomments.length; x++) {
+                        commentsElement.insertAdjacentHTML('beforeend', `<zero-md>
+                            <script type="text/markdown" data-dedent>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;>&nbsp;${lstOfSubcomments[x][0]} - <a style="text-decoration: underline;" href="/user/${lstOfSubcomments[x][1]}">${lstOfSubcomments[x][1]}</a>
+                            <\/script>
+                        <zero-md>`); 
+                    }
+                    if (lstOfSubcomments.length > 0) {
+                        commentsElement.innerHTML += "<br>"
+                    }
+                }
+            });
+        </script>
+    </div>
+{% endblock %}

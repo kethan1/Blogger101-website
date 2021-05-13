@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Post Blog{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block extra_in_head %}
+    <script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2/webcomponents-loader.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@next/dist/zero-md.min.js"></script>
+{% endblock %}
+
+{% block post_blog_link_nav %}
+	<li><a style="color: #2388db;" href="/post_blog">Post Blog</a></li>
+{% endblock %}
+
+{% block post_blog_link_nav2 %}
+    <li><a style="color: #2388db;" href="/post_blog">Post Blog</a></li>
+{% endblock %}
+
+{% block content %}
+    <script>
+        function checkSize(max_img_size) {
+            var input = document.getElementById("file");
+            // check for browser support (may need to be modified)
+            if (input.files && input.files.length == 1) {           
+                if (input.files[0].size > max_img_size) {
+                    alert("The file must be less than " + (max_img_size/1024/1024) + "MB");
+                    return false;
+                }
+            }
+            return true;
+        }
+    </script>
+    <div style="display: flex; flex-wrap: wrap;">
+        <form id="myForm" method="POST" action="/api/add_blog_new" enctype="multipart/form-data" onsubmit="return checkSize(5000000)" style="margin-left: 1vw; width: 100%;" >
+            <input id="user" name="user" value="{{ login_status['username'] }}" hidden>
+            <div class="input-field">
+                <input id="blog_title" name="blog_title" type="text" required>
+                <label for="blog_title">Title</label>
+            </div>
+            <div class="row">
+                <div class="input-field col s6">
+                    <textarea id="blog_content" name="blog_content" class="materialize-textarea" required></textarea>
+                    <label for="blog_content">Content</label>
+                </div>
+                <div id="markdownShow" class="col s6">
+                    <p>Content Preview</p>
+                    <zero-md>
+                        <script type="text/markdown" data-dedent></script>
+                    </zero-md>
+                </div>
+            </div>
+            <div class="file-field input-field">
+                <div style="background: black; color: white;" class="btn">
+                    <span>File</span>
+                    <input name="file" id="file" type="file" accept="image/*" required>
+                </div>
+                <div class="file-path-wrapper">
+                    <input class="file-path validate" type="text" placeholder="Upload Blog Image">
+                </div>
+            </div>                    
+            <div style="text-align: center;">
+                <button style="z-index: 1; background: black; color: white" class="waves-effect waves-light btn">Post Blog</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        var textArea = document.getElementById("blog_content");
+        var markdown = document.getElementById("markdownShow");
+        textArea.addEventListener('input', () => {
+            markdown.innerHTML =  
+                `
+                    <p>Content Preview</p>
+                    <zero-md>
+                        <script type="text/markdown" data-dedent>
+                            ${textArea.value}
+                        <\/script>
+                    </zero-md>
+                `;
+        });
+    </script>
+{% endblock %}
