@@ -92,26 +92,12 @@ def return_use(user):
         return render_template("user_template.html", results_from_user=results, login_status=dict(session["logged_in"]))
     else:
         return render_template("user_template.html", results_from_user=results, login_status=None)
-        # try:
-        #     logged_in = session["logged_in"]
-        #     if logged_in != {}:
-        #         return render_template(f"user_template.html", results_from_user=results, login_status=dict(session["logged_in"]))
-        #     else:
-        #         return render_template(f"user_template.html", results_from_user=results)
-        # except:
-        #     return render_template(f"user_template.html", results_from_user=results)
 
 @app.route("/sign_up", methods=["GET", "POST"])
 def sign_up():
-    try:
-        logged_in = session["logged_in"]
-        if logged_in != {}:
-            flash("Already Logged In")
-            return redirect("/")
-        else:
-            pass
-    except:
-        pass
+    if "logged_in" in session and session["logged_in"] is not None:
+        flash("Already Logged In")
+        return redirect("/")
     if request.method == "GET":
         return render_template("sign_up.html", login_status=None)
     elif request.method == "POST":
@@ -145,15 +131,10 @@ def sign_up():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    try:
-        logged_in = session["logged_in"]
-        if logged_in != {}:
-            flash("Already Logged In")
-            return redirect("/")
-        else:
-            pass
-    except:
-        pass
+    if "logged_in" in session and session["logged_in"] is not None:
+        flash("Already Logged In")
+        return redirect("/")
+    
     if request.method == "GET":
         return render_template("login.html", login_status=None)
     elif request.method == "POST":
@@ -178,13 +159,9 @@ def login():
 
 @app.route("/logout")
 def logout():
-    try:
-        logged_in = session["logged_in"]
-        if logged_in != {}:
-            session["logged_in"] = {}
-        else:
-            flash("Not Logged In")
-    except:
+    if "logged_in" in session and session["logged_in"] is not None:
+        session["logged_in"] = {}
+    else:
         flash("Not Logged In")
     
     return redirect("/")
