@@ -263,34 +263,36 @@ def get_comments():
         comments = mongo.db.blogs.find_one({"title": request.json.get("blog_title")})["comments"]
         commentsToShow = []
         for comment in comments:
-            toAppend = []
             returned = mongo.db.comments.find_one({"_id": ObjectId(str(comment[0]))})
-            toAppend.append(returned["comment"])
-            toAppend.append(returned["user"])
-            toAppend.append(str(returned["_id"]))
-            toAppend2 = []
+            all_comments = [returned["comment"], returned["user"], str(returned["_id"])]
+            sub_comments = []
             for subComment in comment[1]:
                 returned2 = mongo.db.comments.find_one({"_id": ObjectId(str(subComment))})
-                toAppend2.append([returned2["comment"], returned2["user"]])
-            toAppend.append(toAppend2)
-            commentsToShow.append(toAppend)
+                sub_comments.append([returned2["comment"], returned2["user"]])
+            all_comments.append(sub_comments)
+            commentsToShow.append(all_comments)
         return {"found": commentsToShow, "number_of_comments": len(commentsToShow)}
     else:
         return {"found": False}
 
 @app.errorhandler(HTTPException)
-def page_not_found(e):
+def errorHandling(error):
     flash("Page Not Found")
-    return render_template("error.html", year=datetime.date.today().year, error=e)
+    if "logged_in" in session and session["logged_in"] is not None:
+        return render_template("error.html", error=error, code=error.code, login_status=dict(session["logged_in"]))
+    else:
+        return render_template("error.html", error=error, code=error.code, login_status=None)
 
 
 def list_blogs():
-    return reversed(sorted(list(mongo.db.blogs.find({})), key=lambda date: datetime.datetime.strptime(date["date_released"]+date["time_released"], "%m/%d/20%y%H:%M:%S:%f")))
+    return reversed(
+        sorted(
+            list(mongo.db.blogs.find({})), key=lambda date: datetime.datetime.strptime(date["date_released"] + date["time_released"], "%m/%d/20%y%H:%M:%S:%f")
+        )
+    )
 
 
-app.add_template_global(datetime.date, name="date")
 app.add_template_global(list_blogs, name="find_blogs")
-
 
 
 if __name__ == "__main__":
