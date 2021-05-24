@@ -57,7 +57,7 @@
                     document.getElementById("containsMainInput").style.left = "5vw";
                 } else if (main) {
                     if ("{{login_status|safe}}" !== "None") {
-                        loginStatusDict = JSON.parse(`{{login_status|tojson}}`);
+                        var loginStatusDict = JSON.parse(`{{login_status|tojson}}`);
                         fetch("/api/add_comment", {
                             headers : {"content-type" : "application/json; charset=UTF-8"},
                             method : "POST",
@@ -81,7 +81,7 @@
                     };
                 } else {
                     if ("{{login_status|safe}}" !== "None") {
-                        loginStatusDict = JSON.parse(`{{login_status|tojson}}`);
+                        var loginStatusDict = JSON.parse(`{{login_status|tojson}}`);
                         fetch("/api/add_comment", {
                             headers : {"content-type" : "application/json; charset=UTF-8"},
                             method : "POST",
