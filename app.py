@@ -8,7 +8,6 @@ from flask_pymongo import PyMongo
 from flask_compress import Compress
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
-from werkzeug.utils import secure_filename
 from bson.objectid import ObjectId
 import pyimgur
 
@@ -44,27 +43,18 @@ def before_request():
 
 @app.route("/")
 def blogs():
-    try:
-        logged_in = session["logged_in"]
-        if logged_in != {}:
-            return render_template("blogs.html", login_status=dict(session["logged_in"]))
-        else:
-            return render_template("blogs.html", login_status=None)
-    except:
+    if "logged_in" in session and session["logged_in"] is not None:
+        return render_template("blogs.html", login_status=dict(session["logged_in"]))
+    else:
         return render_template("blogs.html", login_status=None)
 
 
 @app.route("/post_blog")
 def post_blog():
-    try:
-        logged_in = session["logged_in"]
-        if logged_in != {}:
-            return render_template("post_blog.html", login_status=dict(session["logged_in"]))
-        else:
-            flash(Markup("""Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Post a Blog"""))
-            return redirect("/")
-    except:
-        flash(Markup("""Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;"  href="/sign_up">Sign Up</a> to Post a Blog"""))
+    if "logged_in" in session and session["logged_in"] is not None:
+        return render_template("post_blog.html", login_status=dict(session["logged_in"]))
+    else:
+        flash(Markup("""Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Post a Blog"""))
         return redirect("/")
 
 
@@ -74,14 +64,10 @@ def return_blog(page):
     if results is None:
         abort(404)
     else:
-        try:
-            logged_in = session["logged_in"]
-            if logged_in != {}:
-                results["text"] = Markup(results["text"])
-                return render_template("blog_template.html", results=results, login_status=dict(session["logged_in"]))
-            else:
-                return render_template("blog_template.html", results=results, login_status=None)
-        except:
+        if "logged_in" in session and session["logged_in"] is not None:
+            results["text"] = Markup(results["text"])
+            return render_template("blog_template.html", results=results, login_status=dict(session["logged_in"]))
+        else:
             return render_template("blog_template.html", results=results, login_status=None)
 
 
