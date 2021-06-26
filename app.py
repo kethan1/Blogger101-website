@@ -3,7 +3,7 @@ import base64
 import json
 import os
 
-from flask import *
+from flask import Flask, render_template, redirect, flash, abort, request, Markup, session
 from flask_pymongo import PyMongo
 from flask_compress import Compress
 from flask_cors import CORS
@@ -33,6 +33,7 @@ mongo = PyMongo(app)
 Compress(app)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+
 @app.before_request
 def before_request():
     if 'DYNO' in os.environ:
@@ -40,6 +41,7 @@ def before_request():
             url = request.url.replace('http://', 'https://', 1)
             code = 301
             return redirect(url, code=code)
+
 
 @app.route("/")
 def blogs():
@@ -66,18 +68,35 @@ def return_blog(page):
     else:
         if "logged_in" in session and session["logged_in"] is not None:
             results["text"] = Markup(results["text"])
-            return render_template("blog_template.html", results=results, login_status=dict(session["logged_in"]))
+            return render_template(
+                "blog_template.html",
+                results=results,
+                login_status=dict(session["logged_in"])
+            )
         else:
-            return render_template("blog_template.html", results=results, login_status=None)
+            return render_template(
+                "blog_template.html",
+                results=results,
+                login_status=None
+            )
 
 
 @app.route("/user/<user>/")
 def return_use(user):
     results = mongo.db.users.find_one({"username": user})
     if "logged_in" in session and session["logged_in"] is not None:
-        return render_template("user_template.html", results_from_user=results, login_status=dict(session["logged_in"]))
+        return render_template(
+            "user_template.html",
+            results_from_user=results,
+            login_status=dict(session["logged_in"])
+        )
     else:
-        return render_template("user_template.html", results_from_user=results, login_status=None)
+        return render_template(
+            "user_template.html",
+            results_from_user=results,
+            login_status=None
+        )
+
 
 @app.route("/sign_up", methods=["GET", "POST"])
 def sign_up():
@@ -89,7 +108,7 @@ def sign_up():
     elif request.method == "POST":
         if request.form["password"] == request.form["confirm_password"]:
             doc = {
-                "first_name": request.form.get("first_name"), 
+                "first_name": request.form.get("first_name"),
                 "last_name": request.form.get("last_name"),
                 "username": request.form.get("username"),
                 "email": request.form.get("email").lower(),
@@ -97,14 +116,14 @@ def sign_up():
             }
             if mongo.db.users.find_one({"email": doc["email"]}) is None:
                 session["logged_in"] = {
-                    "first_name": doc["first_name"], 
+                    "first_name": doc["first_name"],
                     "last_name": doc["last_name"],
                     "email": doc["email"],
                     "username": doc["username"]
                 }
 
                 mongo.db.users.insert_one(doc)
-                
+
                 flash("Successfully Signed Up")
                 return redirect("/")
             else:
@@ -120,7 +139,7 @@ def login():
     if "logged_in" in session and session["logged_in"] is not None:
         flash("Already Logged In")
         return redirect("/")
-    
+
     if request.method == "GET":
         return render_template("login.html", login_status=None)
     elif request.method == "POST":
@@ -128,10 +147,13 @@ def login():
             "email": request.form.get("email").lower(),
             "password": request.form.get("password")
         }
-        found = mongo.db.users.find_one({"email": doc["email"], "password": doc["password"]})
+        found = mongo.db.users.find_one({
+            "email": doc["email"],
+            "password": doc["password"]}
+        )
         if found is not None:
             session["logged_in"] = {
-                "first_name": found["first_name"], 
+                "first_name": found["first_name"],
                 "last_name": found["last_name"],
                 "email": found["email"],
                 "username": found["username"]
@@ -149,23 +171,33 @@ def logout():
         session["logged_in"] = {}
     else:
         flash("Not Logged In")
-    
+
     return redirect("/")
+
 
 @app.route("/api/blogs")
 def api_blogs():
     to_return = []
-    for blog in reversed(sorted(list(mongo.db.blogs.find({})), key=lambda date: datetime.datetime.strptime(date["date_released"]+date["time_released"], "%m/%d/20%y%H:%M:%S:%f"))):
+    for blog in reversed(sorted(list(mongo.db.blogs.find({})), key=lambda date: datetime.datetime.strptime(
+        date["date_released"] + date["time_released"], "%m/%d/20%y%H:%M:%S:%f"
+    ))):
         blog["_id"] = str(blog["_id"])
         blog["link"] = "https://blogger-101.herokuapp.com/" + blog["link"]
         to_return.append(blog)
-    return jsonify(to_return)
+    return to_return
+
 
 @app.route("/api/add_blog_new", methods=["POST"])
 def add_blog_new():
     title = request.form.get("blog_title")
     name = ("_".join(title.split(" "))).lower()
-    to_upload_image = app.config["ImgurObject"]._send_request('https://api.imgur.com/3/image', method='POST', params={'image': base64.b64encode(request.files['file'].read())})
+    to_upload_image = app.config["ImgurObject"]._send_request(
+        'https://api.imgur.com/3/image',
+        method='POST',
+        params={
+            'image': base64.b64encode(request.files['file'].read())
+        }
+    )
     doc = {
         "title": title,
         "user": request.form.get("user"),
@@ -179,6 +211,7 @@ def add_blog_new():
     }
     mongo.db.blogs.insert_one(doc)
     return redirect("/")
+
 
 @app.route("/api/check_user", methods=["POST"])
 def check_user():
@@ -221,21 +254,33 @@ def add_comment():
     comment_type = request.json["type"]
     comment_content = "&zwnj;"+request.json["comment_content"]
     blog_found = mongo.db.blogs.find_one({"title": blog})
-    if blog_found != None:
+    if blog_found is not None:
         if comment_type == "main":
-            _id = mongo.db.comments.insert_one({"comment": comment_content, "user" : request.json["user"]})
+            _id = mongo.db.comments.insert_one({
+                "comment": comment_content,
+                "user": request.json["user"]
+            })
             comments_tmp = blog_found["comments"]
             comments_tmp.append([str(_id.inserted_id), []])
-            mongo.db.blogs.update_one({"title": blog}, {"$set": {"comments": comments_tmp}})
+            mongo.db.blogs.update_one(
+                {"title": blog},
+                {"$set": {"comments": comments_tmp}}
+            )
             return {"worked": True}
         else:
             id_of_comment = request.json["id"]
-            if bool(len([True for i in blog_found["comments"] if i[0]==id_of_comment])):
-                _id = mongo.db.comments.insert_one({"comment": comment_content, "user" : request.json["user"]})
+            if [True for comment in blog_found["comments"] if comment[0] == id_of_comment]:
+                _id = mongo.db.comments.insert_one({
+                    "comment": comment_content,
+                    "user": request.json["user"]
+                })
                 _id = str(_id.inserted_id)
                 comments_tmp = blog_found["comments"]
-                comments_tmp[[comments_tmp.index(i) for i in comments_tmp if i[0]==request.json["id"]][0]][1].append(_id)
-                mongo.db.blogs.update_one({"title": blog}, {"$set": {"comments": comments_tmp}})
+                comments_tmp[[comments_tmp.index(i) for i in comments_tmp if i[0] == request.json["id"]][0]][1].append(_id)
+                mongo.db.blogs.update_one(
+                    {"title": blog},
+                    {"$set": {"comments": comments_tmp}}
+                )
                 return {"worked": True}
             else:
                 return {"worked": False}
@@ -261,13 +306,24 @@ def get_comments():
     else:
         return {"found": False}
 
+
 @app.errorhandler(HTTPException)
 def errorHandling(error):
     flash("Page Not Found")
     if "logged_in" in session and session["logged_in"] is not None:
-        return render_template("error.html", error=error, code=error.code, login_status=dict(session["logged_in"]))
+        return render_template(
+            "error.html",
+            error=error,
+            code=error.code,
+            login_status=dict(session["logged_in"])
+        )
     else:
-        return render_template("error.html", error=error, code=error.code, login_status=None)
+        return render_template(
+            "error.html",
+            error=error,
+            code=error.code,
+            login_status=None
+        )
 
 
 def list_blogs():
