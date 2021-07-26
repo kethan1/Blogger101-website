@@ -10,24 +10,18 @@ from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
 from bson.objectid import ObjectId
 import pyimgur
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 if "DYNO" not in os.environ:
-    with open("apiTokens.json") as apiToken:
-        api_keys_json = json.load(apiToken)
-    app.config.update(
-        IMGUR_ID=api_keys_json["Imgur_ID"],
-        MONGO_URI=api_keys_json["MONGO_URI"],
-        SECRET_KEY=api_keys_json["SECRET_KEY"]
-    )
-else:
-    app.config.update(
-        IMGUR_ID=os.environ["IMGUR_ID"],
-        MONGO_URI=os.environ["MONGO_URI"],
-        SECRET_KEY=os.environ["SECRET_KEY"]
-    )
+    load_dotenv()
+app.config.update(
+    IMGUR_ID=os.environ["IMGUR_ID"],
+    MONGO_URI=os.environ["MONGO_URI"],
+    SECRET_KEY=os.environ["SECRET_KEY"]
+)
 app.config["ImgurObject"] = pyimgur.Imgur(app.config["IMGUR_ID"])
 mongo = PyMongo(app)
 Compress(app)
@@ -218,7 +212,7 @@ def check_user():
     email = (request.json["email"]).lower()
     password = request.json["password"]
 
-    user_found = mongo.db.users.find_one({"email": email, "password": password}) 
+    user_found = mongo.db.users.find_one({"email": email, "password": password})
 
     if user_found is not None:
         return {"found": True, "user_found": user_found["username"]}
