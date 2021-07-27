@@ -3,7 +3,7 @@ import base64
 import json
 import os
 
-from flask import Flask, render_template, redirect, flash, abort, request, Markup, session
+from flask import *
 from flask_pymongo import PyMongo
 from flask_compress import Compress
 from flask_cors import CORS
