@@ -11,6 +11,7 @@ from werkzeug.exceptions import HTTPException
 from bson.objectid import ObjectId
 import pyimgur
 from dotenv import load_dotenv
+from urllib.parse import quote
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -31,10 +32,12 @@ cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 @app.before_request
 def before_request():
     if 'DYNO' in os.environ:
+        print(request)
+        print(type(request))
         if request.url.startswith('http://'):
             url = request.url.replace('http://', 'https://', 1)
             code = 301
-            return redirect(url, code=code)
+            return redirect(quote(url), code=code)
 
 
 @app.route("/")
