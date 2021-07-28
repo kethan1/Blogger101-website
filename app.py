@@ -1,6 +1,5 @@
 import datetime
 import base64
-import json
 import os
 
 from flask import Flask, render_template, redirect, flash, abort, request, Markup, session
@@ -36,8 +35,7 @@ def before_request():
         print(type(request))
         if request.url.startswith('http://'):
             url = request.url.replace('http://', 'https://', 1)
-            code = 301
-            return redirect(quote(url), code=code)
+            return redirect(quote(url), code=301)
 
 
 @app.route("/")
@@ -226,7 +224,7 @@ def check_user():
 @app.route("/api/add_user", methods=["POST"])
 def add_user():
     doc = {
-        "first_name": request.json.get("first_name"), 
+        "first_name": request.json.get("first_name"),
         "last_name": request.json.get("last_name"),
         "username": request.json.get("username"),
         "email": request.json.get("email"),
