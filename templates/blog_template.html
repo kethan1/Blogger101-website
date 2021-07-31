@@ -109,11 +109,10 @@
 
             const commentsElement = document.getElementById('comments');
             fetch("/api/get_blog_comments", {
-                headers : {"content-type" : "application/json; charset=UTF-8"},
-                body : JSON.stringify({"blog_title": "{{ results['title'] }}"}),
-                method : "POST"
-            })
-            .then(async (response) => {
+                headers: {"content-type" : "application/json; charset=UTF-8"},
+                body: JSON.stringify({"blog_title": "{{ results['title'] }}"}),
+                method: "POST"
+            }).then(async (response) => {
                 var responseInJson_all = await response.json();
                 var responseInJson = responseInJson_all["found"];
                 for (let i = 0; i < responseInJson.length; i++) {
@@ -124,14 +123,14 @@
                     <\/zero-md>
                     <p id="${responseInJson[i][2]}" style="cursor: default; color: #039BE5" onclick="PostCommentandSwitch(switchCommentTypetoMain=false, switchCommentTypetoSub=true)">Respond To This Comment</p>`);
                     var lstOfSubcomments = responseInJson[i][3];
-                    for (let x = 0; x < lstOfSubcomments.length; x++) {
+                    for (let subcomment of lstOfSubcomments.length) {
                         commentsElement.insertAdjacentHTML('beforeend', `<zero-md>
                             <script type="text/markdown" data-dedent>
-                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;>&nbsp;${lstOfSubcomments[x][0]} - <a style="text-decoration: underline;" href="/user/${lstOfSubcomments[x][1]}">${lstOfSubcomments[x][1]}</a>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;>&nbsp;${subcomment[0]} - <a style="text-decoration: underline;" href="/user/${subcomment[1]}">${subcomment[1]}</a>
                             <\/script>
                         <zero-md>`); 
                     }
-                    if (lstOfSubcomments.length > 0) {
+                    if (lstOfSubcomments.length) {
                         commentsElement.innerHTML += "<br>"
                     }
                 }

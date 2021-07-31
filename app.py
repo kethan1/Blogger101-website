@@ -31,8 +31,6 @@ cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 @app.before_request
 def before_request():
     if 'DYNO' in os.environ:
-        print(request)
-        print(type(request))
         if request.url.startswith('http://'):
             url = request.url.replace('http://', 'https://', 1)
             return redirect(quote(url), code=301)
