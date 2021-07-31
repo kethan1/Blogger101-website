@@ -2,7 +2,7 @@ import datetime
 import base64
 import os
 
-from flask import Flask, render_template, redirect, flash, abort, request, Markup, session
+from flask import Flask, render_template, redirect, flash, abort, request, Markup, session, jsonify
 from flask_pymongo import PyMongo
 from flask_compress import Compress
 from flask_cors import CORS
@@ -177,7 +177,7 @@ def api_blogs():
         blog["_id"] = str(blog["_id"])
         blog["link"] = "https://blogger-101.herokuapp.com/" + blog["link"]
         to_return.append(blog)
-    return to_return
+    return jsonify(to_return)
 
 
 @app.route("/api/add_blog_new", methods=["POST"])
