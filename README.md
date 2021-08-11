@@ -2,14 +2,11 @@
 
 This is a simple blogging website like Medium. 
 
-To Run:
+## Prerequisites
+* Python 3.5 or later installed
+* Pip installed
 
-Prerequisites:
-
-Python 3.5 or newer \
-Pip
-
-Instructions:
+## Instructions
 
 You may need to use `python3` and `pip3` instead of `python` and `pip` depending on your install. 
 
@@ -23,5 +20,4 @@ SECRET_KEY=<A bunch of random letters used for encrypting the cookies. Something
 
 Then run `python app.py`. The website will be accessible on http://127.0.0.1:5000. 
 
-
-When deploying to heroku, you do not need the `.env` file. Instead, put the Imgur ID, MongoDB Connection URL, and Secret Key in Heroku Config Vars, as IMGUR_ID, MONGO_URI, and SECRET_KEY. 
+When deploying to Heroku, you do not need the `.env` file. Instead, put the Imgur ID, MongoDB Connection URL, and Secret Key in Heroku Config Vars, as IMGUR_ID, MONGO_URI, and SECRET_KEY. 
