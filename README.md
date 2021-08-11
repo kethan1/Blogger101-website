@@ -3,8 +3,8 @@
 This is a simple blogging website like Medium. 
 
 ## Prerequisites
-* Installed Python 3.5 or later
-* Installed `pip` library
+* Python 3.5 or later installed
+* Pip installed
 
 ## Instructions
 
