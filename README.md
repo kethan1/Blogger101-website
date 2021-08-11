@@ -4,7 +4,7 @@ This is a simple blogging website like Medium.
 
 ## Prerequisites
 * Python 3.5 or later installed
-* Pip installed
+* Pip version 18.1.1 or greater installed.
 
 ## Instructions
 
