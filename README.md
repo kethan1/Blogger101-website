@@ -20,4 +20,4 @@ SECRET_KEY=<A bunch of random letters used for encrypting the cookies. Something
 
 Then run `python app.py`. The website will be accessible on http://127.0.0.1:5000. 
 
-When deploying to Heroku, you do not need the `.env` file. Instead, put the Imgur ID, MongoDB Connection URL, and Secret Key in Heroku Config Vars, as IMGUR_ID, MONGO_URI, and SECRET_KEY. 
+When deploying to Heroku, you do not need the `.env` file. Instead, put the `Imgur ID`, `MongoDB Connection URL`, and `Secret Key` in Heroku Config Vars, as `IMGUR_ID`, `MONGO_URI`, and `SECRET_KEY`. 
