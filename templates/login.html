@@ -12,10 +12,6 @@
 	<li><a style="color: #2388db;" href="/login">Login</a></li>
 {% endblock %}
 
-{% block login_link_nav2 %}
-	<li><a style="color: #2388db;" href="/login">Login</a></li>
-{% endblock %}
-
 {% block content %}
     <div style="text-align: center;" class="container">
         <form method="POST" style="display: inline-block; text-align: center; width: 100%">
@@ -26,7 +22,7 @@
                     <label for="email">Email</label>
                 </div>
                 <div class="input-field">
-                    <a onclick="ShowPassword('password')"><i class="unselectable postfix mdi mdi-arrow-right material-icons" style="color: black;">remove_red_eye</i></a>
+                    <a onclick="ShowPassword('password')"><i class="unselectable postfix mdi mdi-arrow-right material-icons" style="color: black; padding-top: 10px;">remove_red_eye</i></a>
                     <i class="material-icons prefix unselectable">lock</i>
                     <input id="password" type="password" name="password" required>
                     <label for="password">Password</label>

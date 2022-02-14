@@ -21,3 +21,27 @@
     -ms-user-select: none;
     user-select: none;
 }
+
+code, pre {
+    background: #e8ebee;
+    font-family: monospace;
+}
+
+:not(pre > code) code {
+    padding: 0.35vw;
+    border-radius: 5px;
+}
+
+pre > code, pre {
+    border-radius: 10px;
+    margin-right: 5vw;
+}
+
+.hljs {
+    background: initial;
+    color: initial;
+}
+
+strong {
+    font-weight: bold;
+}

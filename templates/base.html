@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="description" content="Blogger101 Official Website">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
 
-    <link rel="stylesheet" href="/static/styles.css">
+    {% block extra_before_head %}{% endblock %}
+
     <title>{% block title %}{% endblock %}</title>
 
     <!-- Compiled and minified CSS -->
@@ -15,6 +17,8 @@
 
     <!--Import Google Icon Font-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/styles.css">
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="/static/images/favicon.ico"/>
@@ -39,7 +43,6 @@
             <div class="l12 show-on-large hide-on-med-and-down">
                 <nav style="background-color: #222222">
                     <div class="nav-wrapper">
-                        
                         <ul class="right hide-on-med-and-down">
                             <li>
                                 <i class="material-icons prefix unselectable">account_circle</i>
@@ -51,7 +54,6 @@
                                 {% else %}
                                     <a style="display: inline; color: #2188DB;" href="/user/{{ login_status.username }}">{{ login_status.username }}</a>&nbsp;&nbsp;&nbsp;
                                 {% endif %}
-
                             </li>
                             {% block blogs_link_nav %}
                                 <li><a style="color: white;" href="/">Blogs</a></li>
@@ -90,18 +92,10 @@
         </div>
         {% block mobileLinks %}
             <ul class="sidenav" id="mobile-demo">
-                {% block blogs_link_nav2 %}
-                    <li><a style="color: black;" href="/">Blogs</a></li>
-                {% endblock %}
-                {% block post_blog_link_nav2 %}
-                    <li><a style="color: black;" href="/post_blog">Post Blog</a></li>
-                {% endblock %}
-                {% block sign_up_link_nav2 %}
-                    <li><a style="color: black;" href="/sign_up">Sign Up</a></li>
-                {% endblock %}
-                {% block login_link_nav2 %}
-                    <li><a style="color: black;" href="/login">Login</a></li>
-                {% endblock %}
+                {{ self.blogs_link_nav() }}
+                {{ self.post_blog_link_nav() }}
+                {{ self.sign_up_link_nav() }}
+                {{ self.login_link_nav() }}
                 <li><a style="color: black;" href="/logout">Sign Out</a></li>
             </ul>
         {% endblock %}

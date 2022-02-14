@@ -13,10 +13,6 @@
 	<li><a style="color: #2388db;" href="/post_blog">Post Blog</a></li>
 {% endblock %}
 
-{% block post_blog_link_nav2 %}
-    <li><a style="color: #2388db;" href="/post_blog">Post Blog</a></li>
-{% endblock %}
-
 {% block content %}
     <script>
         function checkSize(max_img_size) {
@@ -32,7 +28,7 @@
         }
     </script>
     <div style="display: flex; flex-wrap: wrap;">
-        <form id="myForm" method="POST" action="/api/add_blog_new" enctype="multipart/form-data" onsubmit="return checkSize(5000000)" style="margin-left: 1vw; width: 100%;" >
+        <form id="myForm" method="POST" action="/api/v1/add_blog_new" enctype="multipart/form-data" onsubmit="return checkSize(5000000)" style="margin-left: 1vw; width: 100%;" >
             <input id="user" name="user" value="{{ login_status['username'] }}" hidden>
             <div class="input-field">
                 <input id="blog_title" name="blog_title" type="text" required>

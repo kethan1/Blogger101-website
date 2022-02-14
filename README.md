@@ -3,18 +3,18 @@
 This is a simple blogging website like Medium. 
 
 ## Prerequisites
-* Python 3.5 or later installed
+* Python 3.6 or later installed
 * Pip installed
 
 ## Instructions
 
-You may need to use `python3` and `pip3` instead of `python` and `pip` depending on your install. 
+You may need to use `python3` and `pip3` instead of `python` and `pip` depending on your installation of Python. 
 
-Download this repo and unzip the folder. Then, `cd` into the folder, and run `pip install -r requirements.txt` to install the needed packages. After that, create an `.env` file with the following format:
+Clone this repo, and `cd` into it. Then run `pip install -r requirements.txt` to install the needed packages. After that, create an `.env` file in the following format:
 
 ```
 Imgur_ID=<Imgur ID API Key Here>
-MONGO_URI=<MongoDB Atlas (free tier will do) URL. Create a project, and collection with blogs, comments, and users. Get the url for the collection and paste it here.>
+MONGO_URI=<MongoDB Atlas (free tier will do) URL. Create a database, and create the collections blogs, comments, and users. Get the url used to access the collection and paste it here.>
 SECRET_KEY=<A bunch of random letters used for encrypting the cookies. Something like "test123" will do for development, but make sure to use something longer and more complicated for production>
 ```
 
