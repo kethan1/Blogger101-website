@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="description" content="Blogger101 Official Website">
@@ -21,91 +22,94 @@
     <link rel="stylesheet" href="/static/styles.css">
 
     <!-- Favicon -->
-    <link rel="shortcut icon" href="/static/images/favicon.ico"/>
-    
+    <link rel="shortcut icon" href="/static/images/favicon.ico" />
+
     {% block extra_in_head %}{% endblock %}
 </head>
 
 <body>
     <div>
         {% with messages = get_flashed_messages() %} {% if messages %} {% for message in messages %}
-            <script>
-                M.toast({
-                    html: '<span>{{ message }}</span><button class="btn-flat toast-action" style="color: white;" onclick="M.Toast.dismissAll();">X</button>',
-                    classes: 'rounded'
-                })
-            </script>
+        <script>
+            M.toast({
+                html: '<span>{{ message }}</span><button class="btn-flat toast-action" style="color: white;" onclick="M.Toast.dismissAll();">X</button>',
+                classes: 'rounded'
+            })
+        </script>
         {% endfor %} {% endif %} {% endwith %}
     </div>
 
     {% block navbar %}
-        <div class="row">
-            <div class="l12 show-on-large hide-on-med-and-down">
-                <nav style="background-color: #222222">
-                    <div class="nav-wrapper">
-                        <ul class="right hide-on-med-and-down">
-                            <li>
-                                <i class="material-icons prefix unselectable">account_circle</i>
-                            </li>
-                            <li style="color: white;">
-                                &nbsp;Logged In:
-                                {% if login_status == None %}
-                                    User Not Logged In&nbsp;&nbsp;&nbsp;
-                                {% else %}
-                                    <a style="display: inline; color: #2188DB;" href="/user/{{ login_status.username }}">{{ login_status.username }}</a>&nbsp;&nbsp;&nbsp;
-                                {% endif %}
-                            </li>
-                            {% block blogs_link_nav %}
-                                <li><a style="color: white;" href="/">Blogs</a></li>
-                            {% endblock %}
-                            {% block post_blog_link_nav %}
-                                <li><a style="color: white;" href="/post_blog">Post Blog</a></li>
-                            {% endblock %}
-                            {% block sign_up_link_nav %}
-                                <li><a style="color: white;" href="/sign_up">Sign Up</a></li>
-                            {% endblock %}
-                            {% block login_link_nav %}
-                                <li><a style="color: white;" href="/login">Login</a></li>
-                            {% endblock %}
-                            <li><a style="color: white;" href="/logout">Sign Out</a></li>
-                        </ul>
+    <div class="row">
+        <div class="l12 show-on-large hide-on-med-and-down">
+            <nav style="background-color: #222222">
+                <div class="nav-wrapper">
+                    <ul class="right hide-on-med-and-down">
+                        <li>
+                            <i class="material-icons prefix unselectable">account_circle</i>
+                        </li>
+                        <li style="color: white;">
+                            &nbsp;Logged In:
+                            {% if login_status == None %}
+                            User Not Logged In&nbsp;&nbsp;&nbsp;
+                            {% else %}
+                            <a style="display: inline; color: #2188DB;"
+                                href="/user/{{ login_status.username }}">{{ login_status.username }}</a>&nbsp;&nbsp;&nbsp;
+                            {% endif %}
+                        </li>
+                        {% block blogs_link_nav %}
+                        <li><a style="color: white;" href="/">Blogs</a></li>
+                        {% endblock %}
+                        {% block post_blog_link_nav %}
+                        <li><a style="color: white;" href="/post_blog">Post Blog</a></li>
+                        {% endblock %}
+                        {% block sign_up_link_nav %}
+                        <li><a style="color: white;" href="/sign_up">Sign Up</a></li>
+                        {% endblock %}
+                        {% block login_link_nav %}
+                        <li><a style="color: white;" href="/login">Login</a></li>
+                        {% endblock %}
+                        <li><a style="color: white;" href="/logout">Sign Out</a></li>
+                    </ul>
 
-                        <div style="height: 100%;" class="row left brand-logo">
-                            <img src="/static/images/logo.png" style="height: 100%;">
-                        </div>
+                    <div style="height: 100%;" class="row left brand-logo">
+                        <img src="/static/images/logo.png" style="height: 100%;">
                     </div>
-                </nav>
-            </div>
-            <div class="s12 m12 show-on-medium-and-down hide-on-large-only">
-                <nav style="background-color: #222222">
-                    <div class="nav-wrapper">
-                        <a style="color: white;" href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
-
-                        <div style="height: 100%;" class="row brand-logo center">
-                            <img src="/static/images/logo.png" style="height: 100%">
-                        </div>
-
-                    </div>
-                </nav>
-                <br>
-            </div>
+                </div>
+            </nav>
         </div>
-        {% block mobileLinks %}
-            <ul class="sidenav" id="mobile-demo">
-                {{ self.blogs_link_nav() }}
-                {{ self.post_blog_link_nav() }}
-                {{ self.sign_up_link_nav() }}
-                {{ self.login_link_nav() }}
-                <li><a style="color: black;" href="/logout">Sign Out</a></li>
-            </ul>
-        {% endblock %}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var elems = document.querySelectorAll('.sidenav');
-                var instances = M.Sidenav.init(elems);
-            });
-        </script>
-    {% endblock %} 
+        <div class="s12 m12 show-on-medium-and-down hide-on-large-only">
+            <nav style="background-color: #222222">
+                <div class="nav-wrapper">
+                    <a style="color: white;" href="#" data-target="mobile-demo" class="sidenav-trigger"><i
+                            class="material-icons">menu</i></a>
+
+                    <div style="height: 100%;" class="row brand-logo center">
+                        <img src="/static/images/logo.png" style="height: 100%">
+                    </div>
+
+                </div>
+            </nav>
+            <br>
+        </div>
+    </div>
+    {% block mobileLinks %}
+    <ul class="sidenav" id="mobile-demo">
+        {{ self.blogs_link_nav() }}
+        {{ self.post_blog_link_nav() }}
+        {{ self.sign_up_link_nav() }}
+        {{ self.login_link_nav() }}
+        <li><a style="color: black;" href="/logout">Sign Out</a></li>
+    </ul>
+    {% endblock %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var elems = document.querySelectorAll('.sidenav');
+            var instances = M.Sidenav.init(elems);
+        });
+    </script>
+    {% endblock %}
     {% block content %} {% endblock %}
 </body>
+
 </html>

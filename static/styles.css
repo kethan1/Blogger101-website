@@ -3,6 +3,18 @@
 *:not(i) {
     font-family: 'Recursive', sans-serif !important;
 }
+  
+  .container {
+    position: relative;
+    height: 400px;
+  }
+  
+  .centered-element {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
 
 .input-field .postfix~input {
     width: 80%;

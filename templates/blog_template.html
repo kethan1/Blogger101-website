@@ -1,109 +1,106 @@
 {% extends "base.html" %}
 {% block title %} Blog - {{ results["title"] }} {% endblock %}
 {% block head %}
-    {{ super() }}
+{{ super() }}
 {% endblock %}
 
 {% block extra_before_head %}
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/styles/default.min.css">
-    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/styles/default.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/highlight.min.js"></script>
 {% endblock %}
 
 {% block extra_in_head %}
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="/static/he.js"></script>
-    <script src="/static/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="/static/he.js"></script>
+<script src="/static/purify.min.js"></script>
 {% endblock %}
 
 {% block blogs_link_nav %}
-	<li><a style="color: #2388db;" href="/">Blogs</a></li>
+<li><a style="color: #2388db;" href="/">Blogs</a></li>
 {% endblock %}
 
 {% block content %}
-    <div style="display: flex; justify-content: space-between;">
-        <span style="margin-left: 1%">Posted On: {{ results["date_released"] }}</span>
-        <span style="margin-right: 1%">Posted By: <a style="text-decoration: underline;" href='/user/{{ results["user"] }}'>{{ results["user"] }}</a></span>
-    </div>
+<div style="display: flex; justify-content: space-between;">
+    <span style="margin-left: 1%">Posted On: {{ results["date_released"] }}</span>
+    <span style="margin-right: 1%">Posted By: <a style="text-decoration: underline;"
+            href='/user/{{ results["user"] }}'>{{ results["user"] }}</a></span>
+</div>
+<br>
+<div class="container">
+    <div id="content">{{ results["text"] }}</div>
+    <script>
+        document.getElementById('content').innerHTML =
+            DOMPurify.sanitize(he.decode(marked.parse(document.getElementById('content').innerHTML)));
+        hljs.highlightAll();
+    </script>
+    <a onclick="SwitchCommentType(main=true)" style="cursor: default">Respond to This Blog</a>
     <br>
-    <div class="container">
-        <div id="content">{{ results["text"] }}</div>
-        <script>
-            document.getElementById('content').innerHTML =
-              DOMPurify.sanitize(he.decode(marked.parse(document.getElementById('content').innerHTML)));
-            hljs.highlightAll();
-        </script>
-        <a onclick="SwitchCommentType(main=true)" style="cursor: default">Respond to This Blog</a>
-        <br>
-        <br>
-        <br>
-        <div id="comments"></div>
-        <div id="containsMainInput" class="input-field">
-            <i class="material-icons prefix unselectable">comment</i>
-            <input onKeyDown="if(event.keyCode==13) PostComment();" id="comment_input" name="comment" type="text">
-            <label for="comment_input">Comment</label>
-        </div>
-        <a onclick="PostComment();" class="waves-effect waves-light btn">Post Comment</a>
-        <br>
-        <br>
-        <script>
-            var isMain = true;
-            var id = null;
-            function SwitchCommentType(main=false, commendID) {
-                if (main) {
-                    isMain = true;
-                    id = null;
-                    document.getElementById("containsMainInput").style.left = "0vw";
-                } else {
-                    isMain = false;
-                    id = commentID;
-                    document.getElementById("containsMainInput").style.left = "5vw";
-                }
+    <br>
+    <br>
+    <div id="comments"></div>
+    <div id="containsMainInput" class="input-field">
+        <i class="material-icons prefix unselectable">comment</i>
+        <input onKeyDown="if(event.keyCode==13) PostComment();" id="comment_input" name="comment" type="text">
+        <label for="comment_input">Comment</label>
+    </div>
+    <a onclick="PostComment();" class="waves-effect waves-light btn">Post Comment</a>
+    <br>
+    <br>
+    <script>
+        var isMain = true;
+        var id = null;
+        function SwitchCommentType(main = false, commendID) {
+            if (main) {
+                isMain = true;
+                id = null;
+                document.getElementById("containsMainInput").style.left = "0vw";
+            } else {
+                isMain = false;
+                id = commentID;
+                document.getElementById("containsMainInput").style.left = "5vw";
             }
-            function PostComment() {
-                var loginStatusDict = JSON.parse(`{{login_status|tojson}}`);
-                if ("{{login_status|safe}}" !== "None") {
-                    if (isMain) {
-                        fetch("/api/v1/add_comment", {
-                            headers : {"content-type" : "application/json; charset=UTF-8"},
-                            method : "POST",
-                            body : JSON.stringify(
-                                {
-                                    "blog_title": "{{ results['title'] }}",
-                                    "type": "main",
-                                    "comment_content": "&zwnj;"+String(document.getElementById("comment_input").value),
-                                    "user": loginStatusDict["username"]
-                                }
-                            )
-                        })
-                        .then(async (response) => {
-                            await window.location.reload(false);
-                        });
-                    } else {
-                        fetch("/api/v1/add_comment", {
-                            headers : {"content-type" : "application/json; charset=UTF-8"},
-                            method : "POST",
-                            body : JSON.stringify({
+        }
+        function PostComment() {
+            var loginStatusDict = JSON.parse(`{{login_status|tojson}}`);
+            if ("{{login_status|safe}}" !== "None") {
+                if (isMain) {
+                    fetch("/api/v1/add-comment", {
+                        headers: { "content-type": "application/json; charset=UTF-8" },
+                        method: "POST",
+                        body: JSON.stringify(
+                            {
                                 "blog_title": "{{ results['title'] }}",
-                                "type": "sub",
-                                "comment_content": "&zwnj;"+String(document.getElementById("comment_input").value),
-                                "user": loginStatusDict["username"],
-                                "id": id
-                            })
-                        }).then(async (response) => {
-                            await window.location.reload(false);
-                        });
-                    }
+                                "type": "main",
+                                "comment_content": "&zwnj;" + String(document.getElementById("comment_input").value),
+                                "user": loginStatusDict["username"]
+                            }
+                        )
+                    }).then(async (response) => await window.location.reload(false));
                 } else {
-                    M.toast({
-                        html: '<span>Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Post a Comment</span><button class="btn-flat toast-action" style="color: white;" onclick="M.Toast.dismissAll();">X</button>',
-                        classes: 'rounded'
+                    fetch("/api/v1/add-comment", {
+                        headers: { "content-type": "application/json; charset=UTF-8" },
+                        method: "POST",
+                        body: JSON.stringify({
+                            "blog_title": "{{ results['title'] }}",
+                            "type": "sub",
+                            "comment_content": "&zwnj;" + String(document.getElementById("comment_input").value),
+                            "user": loginStatusDict["username"],
+                            "id": id
+                        })
+                    }).then(async (response) => {
+                        await window.location.reload(false);
                     });
                 }
+            } else {
+                M.toast({
+                    html: '<span>Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Post a Comment</span><button class="btn-flat toast-action" style="color: white;" onclick="M.Toast.dismissAll();">X</button>',
+                    classes: 'rounded'
+                });
             }
+        }
 
-            const commentsElement = document.getElementById('comments');
-            fetch("/api/v1/get_blog_comments?blog_title={{ results['title'] }}")
+        const commentsElement = document.getElementById('comments');
+        fetch("/api/v1/blog-comments/{{ results['title'] }}")
             .then(async (response) => {
                 let comments = await response.json();
                 for (let comment of comments) {
@@ -116,7 +113,7 @@
                     respondToThisComment.id = comment["id"];
                     respondToThisComment.style.cursor = "default";
                     respondToThisComment.style.color = "#039BE5";
-                    respondToThisComment.addEventListener("click", () => SwitchCommentType(main=false, commentID=comment["id"]));
+                    respondToThisComment.addEventListener("click", () => SwitchCommentType(main = false, commentID = comment["id"]));
                     respondToThisComment.innerText = "Respond To This Comment";
                     mainDiv.appendChild(markdownSpan);
                     mainDiv.appendChild(respondToThisComment);
@@ -136,6 +133,6 @@
                     }
                 }
             });
-        </script>
-    </div>
+    </script>
+</div>
 {% endblock %}
