@@ -1,5 +1,6 @@
 import datetime
 import base64
+import json
 import os
 
 from flask import (
@@ -12,18 +13,22 @@ from flask import (
     Markup,
     session,
     jsonify,
+    url_for,
 )
 from flask_pymongo import PyMongo
 from flask_compress import Compress
 from flask_cors import CORS
+from flask_bcrypt import Bcrypt
 from werkzeug.exceptions import HTTPException
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from urllib.parse import quote
 import pyimgur
-from flask_bcrypt import Bcrypt
+from itsdangerous import URLSafeTimedSerializer
 
 import http_response_codes as status
+import email_oauth
+
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -35,12 +40,22 @@ app.config.update(
     IMGUR_ID=os.environ["IMGUR_ID"],
     MONGO_URI=os.environ["MONGO_URI"],
     SECRET_KEY=os.environ["SECRET_KEY"],
+    EMAIL_USERNAME="Blogger101 Bot",
+    EMAIL_SENDER=os.environ["EMAIL_ADDRESS"],
+    EMAIL_TOKEN=json.loads(os.environ["EMAIL_TOKEN"]),
 )
+
 app.config["ImgurObject"] = pyimgur.Imgur(app.config["IMGUR_ID"])
 mongo = PyMongo(app)
 flask_bcrypt = Bcrypt(app)
 Compress(app)
 cors = CORS(app, resources={"/api/*": {"origins": "*"}})
+
+email_url_generator = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+
+email_oauth_credentials = email_oauth.load_credentials_from_dict(
+    app.config["EMAIL_TOKEN"]
+)
 
 
 @app.before_request
@@ -121,24 +136,58 @@ def sign_up():
                     request.form.get("password")
                 ).decode(),
             }
+
             if mongo.db.users.find_one({"email": doc["email"]}) is None:
-                session["logged_in"] = {
-                    "first_name": doc["first_name"],
-                    "last_name": doc["last_name"],
-                    "email": doc["email"],
-                    "username": doc["username"],
-                }
+                token = email_url_generator.dumps(doc["email"], "email-confirm")
+                confirm_link = url_for("confirm_email", token=token, _external=True)
+                print(confirm_link)
+                email_oauth.send_message(
+                    email_oauth_credentials,
+                    email_oauth.create_message(
+                        "Blogger101 <blogger101.bot@gmail.com>",
+                        doc["email"],
+                        "Blogger101 Email Confirmation",
+                        f"Go to {confirm_link} to verify your email",
+                        f"<a href='{confirm_link}'>Verify Email<a>",
+                    ),
+                )
 
-                mongo.db.users.insert_one(doc)
+                mongo.db.unverified_users.insert_one(doc)
 
-                flash("Successfully Signed Up")
-                return redirect("/")
+                return redirect(f"/verify_email/{token}")
             else:
                 flash("An Account is Already Registered with that Email")
                 return redirect("/sign_up")
         else:
             flash("Confirm Password Does Not Match Password")
             return redirect("/sign_up")
+
+
+@app.route("/confirm/<token>")
+def confirm_email(token):
+    email = email_url_generator.loads(token, salt="email-confirm", max_age=3600)
+    unverified_user = mongo.db.unverified_users.find_one({"email": email})
+    if unverified_user is not None:
+        mongo.db.users.insert_one(unverified_user)
+        mongo.db.unverified_users.remove(unverified_user)
+
+        session["logged_in"] = {
+            "first_name": unverified_user["first_name"],
+            "last_name": unverified_user["last_name"],
+            "email": unverified_user["email"],
+            "username": unverified_user["username"],
+        }
+
+        flash("Successfully Signed Up")
+        return redirect("/")
+    else:
+        abort(404)
+
+
+@app.route("/verify_email/<token>")
+def verify_email(token):
+    email = email_url_generator.loads(token, salt="email-confirm", max_age=3600)
+    return render_template("verify_email.html", login_status=None, email=email)
 
 
 @app.route("/login", methods=["GET", "POST"])

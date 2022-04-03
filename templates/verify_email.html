@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Email Verification{% endblock %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block extra_in_head %}
+<script src="/static/show_password.js"></script>
+{% endblock %}
+
+{% block content %}
+<div style="text-align: center;" class="container">
+    <h4>Email Verification</h4>
+    <p>We've sent an email to {{ email }}.</p>
+    <p>Click on the link in that email to complete your signup. If you have not received an email, check your spam folder. </p>
+</div>
+{% endblock %}

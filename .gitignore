@@ -1,6 +1,6 @@
-/.vscode/
-apiTokens.json
+.vscode
 *.env
+gmailapi
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
