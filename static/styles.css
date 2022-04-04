@@ -4,7 +4,7 @@
     font-family: 'Recursive', sans-serif !important;
 }
 
-#mobile-sidenav > li > a[style*="white"] {
+#mobile-sidenav>li>a[style*="white"] {
     color: black !important;
 }
 

@@ -135,7 +135,9 @@ def change_password_email_sent():
 @app.route("/change_password/<token>", methods=["GET", "POST"])
 def change_password(token):
     if request.method == "GET":
-        return render_template("change_password.html", login_status=session["logged_in"])
+        return render_template(
+            "change_password.html", login_status=session["logged_in"]
+        )
     elif request.method == "POST":
         password_hash = email_url_generator.loads(
             token, salt="change-password", max_age=3600

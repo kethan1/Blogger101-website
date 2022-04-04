@@ -49,7 +49,7 @@
     <script>
         var isMain = true;
         var id = null;
-        function SwitchCommentType(main=false, commendID) {
+        function SwitchCommentType(main = false, commendID) {
             if (main) {
                 isMain = true;
                 id = null;
@@ -65,7 +65,7 @@
             if ("{{login_status|safe}}" !== "None") {
                 if (isMain) {
                     fetch("/api/v1/add-comment", {
-                        headers: {"content-type": "application/json; charset=UTF-8"},
+                        headers: { "content-type": "application/json; charset=UTF-8" },
                         method: "POST",
                         body: JSON.stringify(
                             {
@@ -78,7 +78,7 @@
                     }).then(async (response) => await window.location.reload(false));
                 } else {
                     fetch("/api/v1/add-comment", {
-                        headers: {"content-type": "application/json; charset=UTF-8"},
+                        headers: { "content-type": "application/json; charset=UTF-8" },
                         method: "POST",
                         body: JSON.stringify({
                             "blog_title": "{{ results['title'] }}",
@@ -111,7 +111,7 @@
                     respondToThisComment.id = comment["id"];
                     respondToThisComment.style.cursor = "default";
                     respondToThisComment.style.color = "#039BE5";
-                    respondToThisComment.addEventListener("click", () => SwitchCommentType(main=false, commentID=comment["id"]));
+                    respondToThisComment.addEventListener("click", () => SwitchCommentType(main = false, commentID = comment["id"]));
                     respondToThisComment.innerText = "Respond To This Comment";
                     mainDiv.appendChild(markdownSpan);
                     mainDiv.appendChild(respondToThisComment);
