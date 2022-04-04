@@ -35,12 +35,12 @@ def create_message(sender, receiver, subject, message_text, message_html=None):
     if message_html is None:
         message_html = message_text
 
-    message = MIMEMultipart('alternative')
+    message = MIMEMultipart("alternative")
     message["to"] = receiver
     message["from"] = sender
     message["subject"] = subject
-    part1 = MIMEText(message_text, 'plain')
-    part2 = MIMEText(message_html, 'html')
+    part1 = MIMEText(message_text, "plain")
+    part2 = MIMEText(message_html, "html")
 
     message.attach(part1)
     message.attach(part2)
