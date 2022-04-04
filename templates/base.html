@@ -12,9 +12,9 @@
     <title>{% block title %}{% endblock %}</title>
 
     <!-- Compiled and minified CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/css/materialize.min.css">
     <!-- Compiled and minified JavaScript -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/js/materialize.min.js"></script>
 
     <!--Import Google Icon Font-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -81,20 +81,18 @@
         <div class="s12 m12 show-on-medium-and-down hide-on-large-only">
             <nav style="background-color: #222222">
                 <div class="nav-wrapper">
-                    <a style="color: white;" href="#" data-target="mobile-demo" class="sidenav-trigger"><i
+                    <a style="color: white;" href="#" data-target="mobile-sidenav" class="sidenav-trigger"><i
                             class="material-icons">menu</i></a>
-
                     <div style="height: 100%;" class="row brand-logo center">
                         <img src="/static/images/logo.png" style="height: 100%">
                     </div>
-
                 </div>
             </nav>
             <br>
         </div>
     </div>
     {% block mobileLinks %}
-    <ul class="sidenav" id="mobile-demo">
+    <ul class="sidenav" id="mobile-sidenav">
         {{ self.blogs_link_nav() }}
         {{ self.post_blog_link_nav() }}
         {{ self.sign_up_link_nav() }}

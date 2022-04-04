@@ -1,5 +1,6 @@
 import datetime
 import base64
+from urllib.parse import quote
 import json
 import os
 
@@ -16,15 +17,16 @@ from flask import (
     url_for,
 )
 from flask_pymongo import PyMongo
+from bson.objectid import ObjectId
 from flask_compress import Compress
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from werkzeug.exceptions import HTTPException
-from bson.objectid import ObjectId
-from dotenv import load_dotenv
-from urllib.parse import quote
-import pyimgur
 from itsdangerous import URLSafeTimedSerializer
+
+from dotenv import load_dotenv
+import pyimgur
+import requests
 
 import http_response_codes as status
 import email_oauth
@@ -40,7 +42,8 @@ app.config.update(
     IMGUR_ID=os.environ["IMGUR_ID"],
     MONGO_URI=os.environ["MONGO_URI"],
     SECRET_KEY=os.environ["SECRET_KEY"],
-    EMAIL_USERNAME="Blogger101 Bot",
+    RECAPTCHA_SITEKEY=os.environ["RECAPTCHA_SITEKEY"],
+    RECAPTCHA_SECRETKEY=os.environ["RECAPTCHA_SECRETKEY"],
     EMAIL_SENDER=os.environ["EMAIL_ADDRESS"],
     EMAIL_TOKEN=json.loads(os.environ["EMAIL_TOKEN"]),
 )
@@ -80,7 +83,11 @@ def blogs():
 @app.route("/post_blog")
 def post_blog():
     if logged_in(session):
-        return render_template("post_blog.html", login_status=session["logged_in"])
+        return render_template(
+            "post_blog.html",
+            login_status=session["logged_in"],
+            RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"],
+        )
     flash(
         Markup(
             """Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Post a Blog"""
@@ -89,8 +96,69 @@ def post_blog():
     return redirect("/")
 
 
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    if logged_in(session):
+        flash("Already Logged In")
+        return render_template("/")
+    if request.method == "GET":
+        return render_template(
+            "forgot_password.html", login_status=session["logged_in"]
+        )
+    elif request.method == "POST":
+        email = request.form.get("email")
+        user = mongo.db.users.find_one({"email": email})
+        if user is None:
+            flash("Email not found")
+            return redirect("/forgot_password")
+        token = email_url_generator.dumps(user["password"], "change-password")
+        confirm_link = url_for("change_password", token=token, _external=True)
+        email_oauth.send_message(
+            email_oauth_credentials,
+            email_oauth.create_message(
+                "Blogger101 <blogger101.bot@gmail.com>",
+                email,
+                "Blogger101 Password Change Confirmation",
+                f"Go to {confirm_link} to change your password",
+                f"<a href='{confirm_link}'>Change Password<a>",
+            ),
+        )
+
+        return redirect("/change_password_email_sent")
+
+
+@app.route("/change_password_email_sent")
+def change_password_email_sent():
+    return render_template("change_password_email_sent.html")
+
+
+@app.route("/change_password/<token>", methods=["GET", "POST"])
+def change_password(token):
+    if request.method == "GET":
+        return render_template("change_password.html", login_status=session["logged_in"])
+    elif request.method == "POST":
+        password_hash = email_url_generator.loads(
+            token, salt="change-password", max_age=3600
+        )
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        if password != confirm_password:
+            flash("Password Does Not Match Confirm Password")
+            return redirect(request.url)
+        mongo.db.users.update_one(
+            {"password": password_hash},
+            {
+                "$set": {
+                    "password": flask_bcrypt.generate_password_hash(password).decode(),
+                }
+            },
+        )
+        flash("Your Password Has Been Updated")
+        return redirect("/")
+
+
 @app.route("/blog/<page>/")
-def return_blog(page):
+def blog_page(page):
     results = mongo.db.blogs.find_one({"name": f"{page}.html"})
     if results is None:
         abort(404)
@@ -104,7 +172,7 @@ def return_blog(page):
 
 
 @app.route("/user/<user>/")
-def return_use(user):
+def user_page(user):
     results = mongo.db.users.find_one({"username": user})
     if logged_in(session):
         return render_template(
@@ -124,7 +192,11 @@ def sign_up():
         flash("Already Logged In")
         return redirect("/")
     if request.method == "GET":
-        return render_template("sign_up.html", login_status=None)
+        return render_template(
+            "sign_up.html",
+            login_status=None,
+            RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"],
+        )
     elif request.method == "POST":
         if request.form["password"] == request.form["confirm_password"]:
             doc = {
@@ -140,7 +212,6 @@ def sign_up():
             if mongo.db.users.find_one({"email": doc["email"]}) is None:
                 token = email_url_generator.dumps(doc["email"], "email-confirm")
                 confirm_link = url_for("confirm_email", token=token, _external=True)
-                print(confirm_link)
                 email_oauth.send_message(
                     email_oauth_credentials,
                     email_oauth.create_message(
@@ -184,6 +255,24 @@ def confirm_email(token):
         abort(404)
 
 
+@app.route("/confirm_login/<token>")
+def confirm_login(token):
+    email = email_url_generator.loads(token, salt="email-confirm", max_age=3600)
+    user = mongo.db.users.find_one({"email": email})
+    if user is not None:
+        session["logged_in"] = {
+            "first_name": user["first_name"],
+            "last_name": user["last_name"],
+            "email": user["email"],
+            "username": user["username"],
+        }
+
+        flash("Successfully Logged Up")
+        return redirect("/")
+    else:
+        abort(404)
+
+
 @app.route("/verify_email/<token>")
 def verify_email(token):
     email = email_url_generator.loads(token, salt="email-confirm", max_age=3600)
@@ -197,14 +286,40 @@ def login():
         return redirect("/")
 
     if request.method == "GET":
-        return render_template("login.html", login_status=None)
+        return render_template(
+            "login.html",
+            login_status=None,
+            RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"],
+        )
     elif request.method == "POST":
         doc = {
             "email": request.form.get("email").lower(),
             "password": request.form.get("password"),
         }
+        recaptcha_response = requests.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            params={
+                "secret": os.environ["RECAPTCHA_SECRETKEY"],
+                "response": request.form.get("token"),
+            },
+        ).json()
+        print(recaptcha_response)
         found = mongo.db.users.find_one({"email": doc["email"]})
         if flask_bcrypt.check_password_hash(found["password"], doc["password"]):
+            if recaptcha_response["score"] < 0.5:
+                token = email_url_generator.dumps(doc["email"], "email-confirm")
+                confirm_link = url_for("confirm_login", token=token, _external=True)
+                email_oauth.send_message(
+                    email_oauth_credentials,
+                    email_oauth.create_message(
+                        "Blogger101 <blogger101.bot@gmail.com>",
+                        doc["email"],
+                        "Blogger101 Login Confirmation",
+                        f"Go to {confirm_link} to login to your account",
+                        f"<a href='{confirm_link}'>Login to Your Account<a>",
+                    ),
+                )
+                return render_template("verify_login.html")
             session["logged_in"] = {
                 "first_name": found["first_name"],
                 "last_name": found["last_name"],

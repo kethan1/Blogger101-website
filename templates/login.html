@@ -6,6 +6,7 @@
 
 {% block extra_in_head %}
 <script src="/static/show_password.js"></script>
+<script src="https://www.google.com/recaptcha/api.js"></script>
 {% endblock %}
 
 {% block login_link_nav %}
@@ -13,8 +14,20 @@
 {% endblock %}
 
 {% block content %}
+<script>
+    function onSubmit(token) {
+        document.getElementById("token").value = token;
+        var form = document.getElementById("login-form");
+        if (form.checkValidity()) {
+            form.submit();
+        } else {
+            form.reportValidity();
+        }
+    }
+</script>
 <div style="text-align: center;" class="container">
-    <form method="POST" style="display: inline-block; text-align: center; width: 100%">
+    <form id="login-form" method="POST" style="display: inline-block; text-align: center; width: 100%">
+        <input type="hidden" name="token" id="token">
         <div style="border: 2px solid gray; border-radius: 0.5vw; text-align: center;">
             <div class="input-field">
                 <i class="material-icons prefix unselectable">email</i>
@@ -25,11 +38,15 @@
                 <a onclick="ShowPassword('password')"><i class="unselectable postfix mdi mdi-arrow-right material-icons"
                         style="color: black; padding-top: 10px;">remove_red_eye</i></a>
                 <i class="material-icons prefix unselectable">lock</i>
-                <input id="password" type="password" name="password" required>
+                <input id="password" type="password" name="password" autocomplete="current-password" required>
                 <label for="password">Password</label>
+                <a href="/forgot_password" style="text-align: right; margin-left: 50vw;">Forgot Password</a>
             </div>
             <button style="z-index: 1; background: black; color: white"
-                class="waves-effect waves-light btn">Login</button>
+                class="waves-effect waves-light btn g-recaptcha"
+                data-sitekey="{{ RECAPTCHA_SITEKEY }}" 
+                data-callback="onSubmit"
+                data-action="login">Login</button>
             <br>
             <br>
         </div>

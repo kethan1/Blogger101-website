@@ -7,6 +7,7 @@
 {% block extra_in_head %}
 <script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2/webcomponents-loader.min.js"></script>
 <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@next/dist/zero-md.min.js"></script>
+<script src="https://www.google.com/recaptcha/api.js"></script>
 {% endblock %}
 
 {% block post_blog_link_nav %}
@@ -25,6 +26,11 @@
             }
         }
         return true;
+    }
+
+    function onSubmit(token) {
+        document.getElementById("token").value = token;
+        document.getElementById("login-form").submit();
     }
 </script>
 <div style="display: flex; flex-wrap: wrap;">
@@ -57,8 +63,11 @@
             </div>
         </div>
         <div style="text-align: center;">
-            <button style="z-index: 1; background: black; color: white" class="waves-effect waves-light btn">Post
-                Blog</button>
+            <button style="z-index: 1; background: black; color: white"
+                class="waves-effect waves-light btn g-recaptcha"
+                data-sitekey="{{ RECAPTCHA_SITEKEY }}" 
+                data-callback="onSubmit"
+                data-action="postblog">Post Blog</button>
         </div>
     </form>
 </div>
@@ -66,15 +75,14 @@
     var textArea = document.getElementById("blog_content");
     var markdown = document.getElementById("markdownShow");
     textArea.addEventListener('input', () => {
-        markdown.innerHTML =
-            `
-                    <p>Content Preview</p>
-                    <zero-md>
-                        <script type="text/markdown" data-dedent>
-                            ${textArea.value}
-                        <\/script>
-                    </zero-md>
-                `;
+        markdown.innerHTML = `
+            <p>Content Preview</p>
+            <zero-md>
+                <script type="text/markdown" data-dedent>
+                    ${textArea.value}
+                <\/script>
+            </zero-md>
+        `;
     });
 </script>
 {% endblock %}
