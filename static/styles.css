@@ -3,18 +3,22 @@
 *:not(i) {
     font-family: 'Recursive', sans-serif !important;
 }
-  
-  .container {
+
+#mobile-sidenav > li > a[style*="white"] {
+    color: black !important;
+}
+
+.container {
     position: relative;
     height: 400px;
-  }
-  
-  .centered-element {
+}
+
+.centered-element {
     margin: 0;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-  }
+}
 
 .input-field .postfix~input {
     width: 80%;
@@ -22,6 +26,7 @@
     margin-left: 0px;
     margin-right: 3rem !important;
 }
+
 .input-field .postfix {
     position: absolute;
     width: 3rem;
@@ -34,7 +39,8 @@
     user-select: none;
 }
 
-code, pre {
+code,
+pre {
     background: #e8ebee;
     font-family: monospace;
 }
@@ -44,7 +50,8 @@ code, pre {
     border-radius: 5px;
 }
 
-pre > code, pre {
+pre>code,
+pre {
     border-radius: 10px;
     margin-right: 5vw;
 }

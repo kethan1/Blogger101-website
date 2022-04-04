@@ -9,21 +9,6 @@
 {% endblock %}
 
 {% block content %}
-<script>
-    function PostBlog() {
-        if ("{{login_status|safe}}" !== "None") {
-            window.location.href = "/post_blog"
-        } else {
-            M.toast({
-                html: '<span>Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Post a Blog</span><button class="btn-flat toast-action" style="color: white;" onclick="M.Toast.dismissAll();">X</button>',
-                classes: 'rounded'
-            });
-        }
-    };
-</script>
-<div style="text-align: right; margin-right: 1vw;">
-    <a onclick="PostBlog()" style="cursor: pointer;">New Blog</a>
-</div>
 <div style="display: flex; flex-wrap: wrap;">
     {% for blog in find_blogs() %}
     <div onclick="window.location=`{{ blog['link'] }}`"
