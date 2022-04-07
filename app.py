@@ -76,8 +76,89 @@ def logged_in(session):
 def blogs():
     return render_template(
         "blogs.html",
-        login_status=((session["logged_in"] if logged_in(session) else None)),
+        login_status=session["logged_in"] if logged_in(session) else None,
     )
+
+
+@app.route("/myblogs")
+def myblogs():
+    if logged_in(session):
+        return render_template(
+            "myblogs.html",
+            login_status=session["logged_in"] if logged_in(session) else None,
+        )
+    flash(
+        Markup(
+            'Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to View Your Blogs'
+        )
+    )
+    return redirect("/")
+
+
+@app.route("/delete/<title>")
+def delete_blog(title):
+    if logged_in(session):
+        if (
+            mongo.db.blogs.find_one(
+                {"title": title, "user": session["logged_in"]["username"]}
+            )
+            is not None
+        ):
+            mongo.db.blogs.delete_one(
+                {"title": title, "user": session["logged_in"]["username"]}
+            )
+            flash("Blog Has Been Deleted")
+        else:
+            flash("Blog Not Found")
+    else:
+        flash(
+            Markup(
+                'Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Delete Your Blogs'
+            )
+        )
+        return redirect("/")
+    return redirect("/myblogs")
+
+
+@app.route("/edit/<title>", methods=["GET", "POST"])
+def edit_blog(title):
+    if logged_in(session):
+        if request.method == "GET":
+            blog = mongo.db.blogs.find_one(
+                {"title": title, "user": session["logged_in"]["username"]}
+            )
+            if blog is None:
+                flash("Blog Not Found")
+                return redirect("/myblogs")
+            return render_template(
+                "edit.html",
+                blog_title=title,
+                blog_content=blog["text"],
+                login_status=session["logged_in"] if logged_in(session) else None,
+                RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"]
+            )
+        elif request.method == "POST":
+            if (
+                mongo.db.blogs.find_one(
+                    {"title": title, "user": session["logged_in"]["username"]}
+                )
+                is not None
+            ):
+                mongo.db.blogs.update_one(
+                    {"title": title, "user": session["logged_in"]["username"]},
+                    {"$set": {"text": request.form["blog_content"]}},
+                )
+                flash("Blog Has Been Updated")
+            else:
+                flash("Blog Not Found")
+            return redirect("/myblogs")
+    else:
+        flash(
+            Markup(
+                'Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Delete Your Blogs'
+            )
+        )
+        return redirect("/")
 
 
 @app.route("/post_blog")
@@ -85,12 +166,12 @@ def post_blog():
     if logged_in(session):
         return render_template(
             "post_blog.html",
-            login_status=session["logged_in"],
+            login_status=session["logged_in"] if logged_in(session) else None,
             RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"],
         )
     flash(
         Markup(
-            """Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Post a Blog"""
+            'Please <a style="text-decoration: underline;" href="/login">Login</a> or <a style="text-decoration: underline;" href="/sign_up">Sign Up</a> to Post a Blog'
         )
     )
     return redirect("/")
@@ -103,7 +184,8 @@ def forgot_password():
         return render_template("/")
     if request.method == "GET":
         return render_template(
-            "forgot_password.html", login_status=session["logged_in"]
+            "forgot_password.html",
+            login_status=session["logged_in"] if logged_in(session) else None,
         )
     elif request.method == "POST":
         email = request.form.get("email")
@@ -127,16 +209,22 @@ def forgot_password():
         return redirect("/change_password_email_sent")
 
 
-@app.route("/change_password_email_sent")
-def change_password_email_sent():
-    return render_template("change_password_email_sent.html")
+@app.route("/change_password_email_sent/<token>")
+def change_password_email_sent(token):
+    email = email_url_generator.loads(token, salt="email-confirm", max_age=3600)
+    return render_template(
+        "change_password_email_sent.html",
+        login_status=session["logged_in"] if logged_in(session) else None,
+        email=email,
+    )
 
 
 @app.route("/change_password/<token>", methods=["GET", "POST"])
 def change_password(token):
     if request.method == "GET":
         return render_template(
-            "change_password.html", login_status=session["logged_in"]
+            "change_password.html",
+            login_status=session["logged_in"] if logged_in(session) else None,
         )
     elif request.method == "POST":
         password_hash = email_url_generator.loads(
@@ -211,7 +299,12 @@ def sign_up():
                 ).decode(),
             }
 
-            if mongo.db.users.find_one({"email": doc["email"]}) is None:
+            if (
+                mongo.db.users.find_one(
+                    {"email": doc["email"], "username": doc["username"]}
+                )
+                is None
+            ):
                 token = email_url_generator.dumps(doc["email"], "email-confirm")
                 confirm_link = url_for("confirm_email", token=token, _external=True)
                 email_oauth.send_message(
@@ -229,7 +322,10 @@ def sign_up():
 
                 return redirect(f"/verify_email/{token}")
             else:
-                flash("An Account is Already Registered with that Email")
+                if mongo.db.users.find_one({"email": doc["email"]}) is not None:
+                    flash("An Account is Already Registered with that Email")
+                else:
+                    flash("An Account is Already Registered with that Username")
                 return redirect("/sign_up")
         else:
             flash("Confirm Password Does Not Match Password")
@@ -305,7 +401,6 @@ def login():
                 "response": request.form.get("token"),
             },
         ).json()
-        print(recaptcha_response)
         found = mongo.db.users.find_one({"email": doc["email"]})
         if flask_bcrypt.check_password_hash(found["password"], doc["password"]):
             if recaptcha_response["score"] < 0.5:
@@ -348,6 +443,7 @@ def logout():
 
 @app.route("/api/v1/blogs")
 def api_blogs():
+    relative = request.args.get("relative", False)
     to_return = []
     for blog in sorted(
         list(mongo.db.blogs.find({})),
@@ -357,7 +453,8 @@ def api_blogs():
         reverse=True,
     ):
         blog["_id"] = str(blog["_id"])
-        blog["link"] = f"https://blogger-101.herokuapp.com/{blog['link']}"
+        if not relative:
+            blog["link"] = f"https://blogger-101.herokuapp.com/{blog['link']}"
         to_return.append(blog)
     return jsonify(to_return)
 
@@ -521,10 +618,7 @@ def get_blogs():
 
 @app.context_processor
 def convert_string_to_json():
-    def str_to_json(text):
-        return {"text": text}
-
-    return dict(str_to_json=str_to_json)
+    return dict(str_to_json=lambda text: {"text": text})
 
 
 if __name__ == "__main__":
