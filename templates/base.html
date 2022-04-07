@@ -60,16 +60,25 @@
                         {% block blogs_link_nav %}
                         <li><a style="color: white;" href="/">Blogs</a></li>
                         {% endblock %}
+                        {% if login_status != None %}
                         {% block post_blog_link_nav %}
                         <li><a style="color: white;" href="/post_blog">Post Blog</a></li>
                         {% endblock %}
+                        {% block my_blogs_link_nav %}
+                        <li><a style="color: white;" href="/myblogs">My Blogs</a></li>
+                        {% endblock %}
+                        {% endif %}
+                        {% if login_status == None %}
                         {% block sign_up_link_nav %}
                         <li><a style="color: white;" href="/sign_up">Sign Up</a></li>
                         {% endblock %}
                         {% block login_link_nav %}
                         <li><a style="color: white;" href="/login">Login</a></li>
                         {% endblock %}
+                        {% endif %}
+                        {% if login_status != None %}
                         <li><a style="color: white;" href="/logout">Sign Out</a></li>
+                        {% endif %}
                     </ul>
 
                     <div style="height: 100%;" class="row left brand-logo">
@@ -94,10 +103,17 @@
     {% block mobileLinks %}
     <ul class="sidenav" id="mobile-sidenav">
         {{ self.blogs_link_nav() }}
+        {% if login_status != None %}
         {{ self.post_blog_link_nav() }}
+        {{ self.my_blogs_link_nav() }}
+        {% endif %}
+        {% if login_status == None %}
         {{ self.sign_up_link_nav() }}
         {{ self.login_link_nav() }}
+        {% endif %}
+        {% if login_status != None %}
         <li><a style="color: black;" href="/logout">Sign Out</a></li>
+        {% endif %}
     </ul>
     {% endblock %}
     <script>

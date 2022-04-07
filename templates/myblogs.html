@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}My Blogs{% endblock %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block my_blogs_link_nav %}
+<li><a style="color: #2388db;" href="/">My Blogs</a></li>
+{% endblock %}
+
+{% block content %}
+<div id="blogs" style="display: flex; flex-wrap: wrap;">
+    {% for blog in find_blogs() %}
+    {% if login_status.username == blog["user"] %}
+    <div onclick="window.location=`{{ blog['link'] }}`"
+        style="cursor: pointer; margin: 1em; border: 2px solid lightgray; padding: 0.5vw; padding-bottom: 4em; text-align: center; width: 18em"
+        class="z-depth-2">
+        <h5 style="word-wrap: break-word; max-width: 12em;">{{ blog["title"] }}</h5>
+        <p>Published: {{ blog['date_released'] }}</p>
+        <a></a>
+        <img src="{{ blog['image'] }}" style="width: 12em; ">
+        <br>
+        <a href="/edit/{{ blog['title'] }}"><i class="material-icons unselectable"
+                style="font-size: 2.5vw;">edit</i></a>
+        <a href="#modal{{ blog['id'] }}" class="modal-trigger"><i class="material-icons unselectable"
+                style="color: #de2720; font-size: 2.5vw;">delete</i></a>
+        <div id="modal{{ blog['id'] }}" class="modal">
+            <div class="modal-content">
+                <h4>Do You Want to Delete {{ blog["title"] }}</h4>
+                <p>This action is irreversable. Are you sure you want to delete {{ blog["title"] }}</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cancel</a>
+                <a href="/delete_blog/{{ blog['title'] }}"
+                    class="modal-close waves-effect waves-green btn-flat">Delete</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var elems = document.querySelectorAll('.modal');
+        var instances = M.Modal.init(elems, {});
+    });
+</script>
+{% endblock %}

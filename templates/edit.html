@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Post Blog{% endblock %}
+{% block title %}Edit Blog{% endblock %}
 {% block head %}
 {{ super() }}
 {% endblock %}
@@ -8,10 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2/webcomponents-loader.min.js"></script>
 <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@next/dist/zero-md.min.js"></script>
 <script src="https://www.google.com/recaptcha/api.js"></script>
-{% endblock %}
-
-{% block post_blog_link_nav %}
-<li><a style="color: #2388db;" href="/post_blog">Post Blog</a></li>
+<meta name="blog_content" content="{{ blog_content }}">
 {% endblock %}
 
 {% block content %}
@@ -30,18 +27,14 @@
 
     function onSubmit(token) {
         document.getElementById("token").value = token;
-        document.getElementById("post-blog-form").submit();
+        document.getElementById("update-blog-form").submit();
     }
 </script>
 <div style="display: flex; flex-wrap: wrap;">
-    <form id="post-blog-form" method="POST" action="/api/v1/post-blog" enctype="multipart/form-data"
+    <h4 style="margin-right: auto; margin-left: auto;">Editing {{ blog_title }}</h4>
+    <form id="update-blog-form" method="POST" enctype="multipart/form-data"
         onsubmit="checkSize(5000000)" style="margin-left: 1vw; width: 100%;">
         <input type="hidden" name="token" id="token">
-        <input id="user" name="user" value="{{ login_status['username'] }}" hidden>
-        <div class="input-field">
-            <input id="blog_title" name="blog_title" type="text" required>
-            <label for="blog_title">Title</label>
-        </div>
         <div class="row">
             <div class="input-field col s6">
                 <textarea id="blog_content" name="blog_content" class="materialize-textarea" required></textarea>
@@ -54,7 +47,7 @@
                 </zero-md>
             </div>
         </div>
-        <div class="file-field input-field">
+        <!-- <div class="file-field input-field">
             <div style="background: black; color: white;" class="btn">
                 <span>File</span>
                 <input name="file" id="file" type="file" accept="image/*" required>
@@ -62,17 +55,27 @@
             <div class="file-path-wrapper">
                 <input class="file-path validate" type="text" placeholder="Upload Blog Image">
             </div>
-        </div>
+        </div> -->
         <div style="text-align: center;">
             <button style="z-index: 1; background: black; color: white" class="waves-effect waves-light btn g-recaptcha"
-                data-sitekey="{{ RECAPTCHA_SITEKEY }}" data-callback="onSubmit" data-action="postblog">Post
+                data-sitekey="{{ RECAPTCHA_SITEKEY }}" data-callback="onSubmit" data-action="updateblog">Update
                 Blog</button>
         </div>
     </form>
 </div>
 <script>
     var textArea = document.getElementById("blog_content");
+    var blog_content = document.querySelector("meta[name='blog_content']").getAttribute("content");
     var markdown = document.getElementById("markdownShow");
+    textArea.value = blog_content;
+    markdown.innerHTML = `
+        <p>Content Preview</p>
+        <zero-md>
+            <script type="text/markdown" data-dedent>
+                ${textArea.value}
+            <\/script>
+        </zero-md>
+    `;
     textArea.addEventListener('input', () => {
         markdown.innerHTML = `
             <p>Content Preview</p>
@@ -84,4 +87,5 @@
         `;
     });
 </script>
+<br>
 {% endblock %}
