@@ -206,7 +206,7 @@ def forgot_password():
             ),
         )
 
-        return redirect("/change_password_email_sent")
+        return redirect(f"/change_password_email_sent/{token}")
 
 
 @app.route("/change_password_email_sent/<token>")
@@ -489,10 +489,10 @@ def check_user():
     email = (request.json["email"]).lower()
     password = request.json["password"]
 
-    user_found = mongo.db.users.find_one({"email": email, "password": password})
+    found = mongo.db.users.find_one({"email": email})
 
-    if user_found is not None:
-        return {"found": True, "user_found": user_found["username"]}
+    if flask_bcrypt.check_password_hash(found["password"], password):
+        return {"found": True, "user_found": found["username"]}
     else:
         return {"found": False}, status.USER_NOT_FOUND
 
