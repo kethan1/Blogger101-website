@@ -1,11 +1,9 @@
 import datetime
 import base64
 from urllib.parse import quote
-import json
 import os
 
 from flask import (
-    Flask,
     render_template,
     redirect,
     flash,
@@ -16,48 +14,18 @@ from flask import (
     jsonify,
     url_for,
 )
-from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
-from flask_compress import Compress
-from flask_cors import CORS
-from flask_bcrypt import Bcrypt
 from werkzeug.exceptions import HTTPException
-from itsdangerous import URLSafeTimedSerializer
-
-from dotenv import load_dotenv
-import pyimgur
 import requests
 
-import http_response_codes as status
-import email_oauth
-
-
-app = Flask(__name__)
-app.url_map.strict_slashes = False
-
-if "DYNO" not in os.environ:
-    load_dotenv()
-
-app.config.update(
-    IMGUR_ID=os.environ["IMGUR_ID"],
-    MONGO_URI=os.environ["MONGO_URI"],
-    SECRET_KEY=os.environ["SECRET_KEY"],
-    RECAPTCHA_SITEKEY=os.environ["RECAPTCHA_SITEKEY"],
-    RECAPTCHA_SECRETKEY=os.environ["RECAPTCHA_SECRETKEY"],
-    EMAIL_SENDER=os.environ["EMAIL_ADDRESS"],
-    EMAIL_TOKEN=json.loads(os.environ["EMAIL_TOKEN"]),
-)
-
-app.config["ImgurObject"] = pyimgur.Imgur(app.config["IMGUR_ID"])
-mongo = PyMongo(app)
-flask_bcrypt = Bcrypt(app)
-Compress(app)
-cors = CORS(app, resources={"/api/*": {"origins": "*"}})
-
-email_url_generator = URLSafeTimedSerializer(app.config["SECRET_KEY"])
-
-email_oauth_credentials = email_oauth.load_credentials_from_dict(
-    app.config["EMAIL_TOKEN"]
+from blogger101 import app
+from blogger101 import http_response_codes as status
+from blogger101 import email_oauth
+from blogger101.auth import Auth, logged_in
+from blogger101.app_extensions import (
+    mongo,
+    flask_bcrypt,
+    serializer,
 )
 
 
@@ -66,10 +34,6 @@ def before_request():
     if "DYNO" in os.environ and request.url.startswith("http://"):
         url = request.url.replace("http://", "https://", 1)
         return redirect(quote(url), code=301)
-
-
-def logged_in(session):
-    return "logged_in" in session and session["logged_in"] not in (None, {})
 
 
 @app.route("/")
@@ -135,7 +99,7 @@ def edit_blog(title):
                 blog_title=title,
                 blog_content=blog["text"],
                 login_status=session["logged_in"] if logged_in(session) else None,
-                RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"]
+                RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"],
             )
         elif request.method == "POST":
             if (
@@ -193,12 +157,12 @@ def forgot_password():
         if user is None:
             flash("Email not found")
             return redirect("/forgot_password")
-        token = email_url_generator.dumps(user["password"], "change-password")
+        token = serializer.dumps(user["password"], "change-password")
         confirm_link = url_for("change_password", token=token, _external=True)
         email_oauth.send_message(
-            email_oauth_credentials,
+            app.config["GMAIL_API_Creds"],
             email_oauth.create_message(
-                "Blogger101 <blogger101.bot@gmail.com>",
+                f"Blogger101 <{app.config['EMAIL_SENDER']}>",
                 email,
                 "Blogger101 Password Change Confirmation",
                 f"Go to {confirm_link} to change your password",
@@ -211,7 +175,7 @@ def forgot_password():
 
 @app.route("/change_password_email_sent/<token>")
 def change_password_email_sent(token):
-    email = email_url_generator.loads(token, salt="email-confirm", max_age=3600)
+    email = serializer.loads(token, salt="email-confirm", max_age=3600)
     return render_template(
         "change_password_email_sent.html",
         login_status=session["logged_in"] if logged_in(session) else None,
@@ -227,9 +191,7 @@ def change_password(token):
             login_status=session["logged_in"] if logged_in(session) else None,
         )
     elif request.method == "POST":
-        password_hash = email_url_generator.loads(
-            token, salt="change-password", max_age=3600
-        )
+        password_hash = serializer.loads(token, salt="change-password", max_age=3600)
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
         if password != confirm_password:
@@ -305,12 +267,12 @@ def sign_up():
                 )
                 is None
             ):
-                token = email_url_generator.dumps(doc["email"], "email-confirm")
+                token = serializer.dumps(doc["email"], "email-confirm")
                 confirm_link = url_for("confirm_email", token=token, _external=True)
                 email_oauth.send_message(
-                    email_oauth_credentials,
+                    app.config["GMAIL_API_Creds"],
                     email_oauth.create_message(
-                        "Blogger101 <blogger101.bot@gmail.com>",
+                        f"Blogger101 <{app.config['EMAIL_SENDER']}>",
                         doc["email"],
                         "Blogger101 Email Confirmation",
                         f"Go to {confirm_link} to verify your email",
@@ -334,7 +296,7 @@ def sign_up():
 
 @app.route("/confirm/<token>")
 def confirm_email(token):
-    email = email_url_generator.loads(token, salt="email-confirm", max_age=3600)
+    email = serializer.loads(token, salt="email-confirm", max_age=3600)
     unverified_user = mongo.db.unverified_users.find_one({"email": email})
     if unverified_user is not None:
         mongo.db.users.insert_one(unverified_user)
@@ -355,7 +317,7 @@ def confirm_email(token):
 
 @app.route("/confirm_login/<token>")
 def confirm_login(token):
-    email = email_url_generator.loads(token, salt="email-confirm", max_age=3600)
+    email = serializer.loads(token, salt="email-confirm", max_age=3600)
     user = mongo.db.users.find_one({"email": email})
     if user is not None:
         session["logged_in"] = {
@@ -373,7 +335,7 @@ def confirm_login(token):
 
 @app.route("/verify_email/<token>")
 def verify_email(token):
-    email = email_url_generator.loads(token, salt="email-confirm", max_age=3600)
+    email = serializer.loads(token, salt="email-confirm", max_age=3600)
     return render_template("verify_email.html", login_status=None, email=email)
 
 
@@ -382,7 +344,6 @@ def login():
     if logged_in(session):
         flash("Already Logged In")
         return redirect("/")
-
     if request.method == "GET":
         return render_template(
             "login.html",
@@ -390,27 +351,31 @@ def login():
             RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"],
         )
     elif request.method == "POST":
-        doc = {
-            "email": request.form.get("email").lower(),
-            "password": request.form.get("password"),
-        }
+        email = request.form.get("email").lower()
+        password = request.form.get("password")
         recaptcha_response = requests.post(
             "https://www.google.com/recaptcha/api/siteverify",
             params={
-                "secret": os.environ["RECAPTCHA_SECRETKEY"],
+                "secret": app.config["RECAPTCHA_SECRETKEY"],
                 "response": request.form.get("token"),
             },
         ).json()
-        found = mongo.db.users.find_one({"email": doc["email"]})
-        if flask_bcrypt.check_password_hash(found["password"], doc["password"]):
+
+        login_response = Auth.check_login(email, password)
+        if login_response["error"]:
+            flash(login_response["message"])
+            return redirect("/login")
+        user = login_response["user"]
+
+        if flask_bcrypt.check_password_hash(user["password"], password):
             if recaptcha_response["score"] < 0.5:
-                token = email_url_generator.dumps(doc["email"], "email-confirm")
+                token = serializer.dumps(email, "email-confirm")
                 confirm_link = url_for("confirm_login", token=token, _external=True)
                 email_oauth.send_message(
-                    email_oauth_credentials,
+                    app.config["GMAIL_API_Creds"],
                     email_oauth.create_message(
-                        "Blogger101 <blogger101.bot@gmail.com>",
-                        doc["email"],
+                        f"Blogger101 <{app.config['EMAIL_SENDER']}>",
+                        email,
                         "Blogger101 Login Confirmation",
                         f"Go to {confirm_link} to login to your account",
                         f"<a href='{confirm_link}'>Login to Your Account<a>",
@@ -418,10 +383,10 @@ def login():
                 )
                 return render_template("verify_login.html")
             session["logged_in"] = {
-                "first_name": found["first_name"],
-                "last_name": found["last_name"],
-                "email": found["email"],
-                "username": found["username"],
+                "first_name": user["first_name"],
+                "last_name": user["last_name"],
+                "email": user["email"],
+                "username": user["username"],
             }
             flash("Successfully Logged In")
             return redirect("/")
@@ -619,7 +584,3 @@ def get_blogs():
 @app.context_processor
 def convert_string_to_json():
     return dict(str_to_json=lambda text: {"text": text})
-
-
-if __name__ == "__main__":
-    app.run(debug=True)

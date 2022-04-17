@@ -10,14 +10,16 @@ def load_credentials_from_file(token_file_path):
     creds = Credentials.from_authorized_user_file(
         token_file_path, ["https://www.googleapis.com/auth/gmail.send"]
     )
-    return build("gmail", "v1", credentials=creds)
+    creds = build("gmail", "v1", credentials=creds)
+    return creds
 
 
 def load_credentials_from_dict(token_dict):
     creds = Credentials.from_authorized_user_info(
         token_dict, ["https://www.googleapis.com/auth/gmail.send"]
     )
-    return build("gmail", "v1", credentials=creds)
+    creds = build("gmail", "v1", credentials=creds)
+    return creds
 
 
 def create_message(sender, receiver, subject, message_text, message_html=None):

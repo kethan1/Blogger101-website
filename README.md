@@ -13,7 +13,7 @@ You may need to use `python3` and `pip3` instead of `python` and `pip` depending
 Clone this repo and `cd` into it. Then run `pip install -r requirements.txt` to install the needed packages. After that, create an `.env` file in the following format:
 
 ```
-Imgur_ID=<Imgur ID API Key Here>
+IMGUR_ID=<Imgur ID API Key Here>
 MONGO_URI=<MongoDB Atlas (free tier will do) URL. Create a database, and create the collections blogs, comments, and users. Get the url used to access the collection and paste it here.>
 SECRET_KEY=<A bunch of random letters used for encrypting the cookies. Something like "test123" will do for development, but make sure to use something longer and more complicated for production>
 RECAPTCHA_SITEKEY=<Your site key here>
