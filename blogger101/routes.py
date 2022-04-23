@@ -4,6 +4,8 @@ from urllib.parse import quote
 import os
 
 from flask import (
+    Blueprint,
+    current_app,
     render_template,
     redirect,
     flash,
@@ -18,7 +20,6 @@ from bson.objectid import ObjectId
 from werkzeug.exceptions import HTTPException
 import requests
 
-from blogger101 import app
 from blogger101 import http_response_codes as status
 from blogger101 import email_oauth
 from blogger101.auth import Auth, logged_in
@@ -29,14 +30,17 @@ from blogger101.app_extensions import (
 )
 
 
-@app.before_request
+bp = Blueprint("routes", __name__)
+
+
+@bp.before_request
 def before_request():
     if "DYNO" in os.environ and request.url.startswith("http://"):
         url = request.url.replace("http://", "https://", 1)
         return redirect(quote(url), code=301)
 
 
-@app.route("/")
+@bp.route("/")
 def blogs():
     return render_template(
         "blogs.html",
@@ -44,7 +48,7 @@ def blogs():
     )
 
 
-@app.route("/myblogs")
+@bp.route("/myblogs")
 def myblogs():
     if logged_in(session):
         return render_template(
@@ -59,7 +63,7 @@ def myblogs():
     return redirect("/")
 
 
-@app.route("/delete/<title>")
+@bp.route("/delete/<title>")
 def delete_blog(title):
     if logged_in(session):
         if (
@@ -84,7 +88,7 @@ def delete_blog(title):
     return redirect("/myblogs")
 
 
-@app.route("/edit/<title>", methods=["GET", "POST"])
+@bp.route("/edit/<title>", methods=["GET", "POST"])
 def edit_blog(title):
     if logged_in(session):
         if request.method == "GET":
@@ -99,7 +103,7 @@ def edit_blog(title):
                 blog_title=title,
                 blog_content=blog["text"],
                 login_status=session["logged_in"] if logged_in(session) else None,
-                RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"],
+                RECAPTCHA_SITEKEY=current_app.config["RECAPTCHA_SITEKEY"],
             )
         elif request.method == "POST":
             if (
@@ -125,13 +129,13 @@ def edit_blog(title):
         return redirect("/")
 
 
-@app.route("/post_blog")
+@bp.route("/post_blog")
 def post_blog():
     if logged_in(session):
         return render_template(
             "post_blog.html",
             login_status=session["logged_in"] if logged_in(session) else None,
-            RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"],
+            RECAPTCHA_SITEKEY=current_app.config["RECAPTCHA_SITEKEY"],
         )
     flash(
         Markup(
@@ -141,7 +145,7 @@ def post_blog():
     return redirect("/")
 
 
-@app.route("/forgot_password", methods=["GET", "POST"])
+@bp.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     if logged_in(session):
         flash("Already Logged In")
@@ -160,9 +164,9 @@ def forgot_password():
         token = serializer.dumps(user["password"], "change-password")
         confirm_link = url_for("change_password", token=token, _external=True)
         email_oauth.send_message(
-            app.config["GMAIL_API_Creds"],
+            current_app.config["GMAIL_API_Creds"],
             email_oauth.create_message(
-                f"Blogger101 <{app.config['EMAIL_SENDER']}>",
+                f"Blogger101 <{current_app.config['EMAIL_SENDER']}>",
                 email,
                 "Blogger101 Password Change Confirmation",
                 f"Go to {confirm_link} to change your password",
@@ -173,7 +177,7 @@ def forgot_password():
         return redirect(f"/change_password_email_sent/{token}")
 
 
-@app.route("/change_password_email_sent/<token>")
+@bp.route("/change_password_email_sent/<token>")
 def change_password_email_sent(token):
     email = serializer.loads(token, salt="email-confirm", max_age=3600)
     return render_template(
@@ -183,7 +187,7 @@ def change_password_email_sent(token):
     )
 
 
-@app.route("/change_password/<token>", methods=["GET", "POST"])
+@bp.route("/change_password/<token>", methods=["GET", "POST"])
 def change_password(token):
     if request.method == "GET":
         return render_template(
@@ -209,7 +213,7 @@ def change_password(token):
         return redirect("/")
 
 
-@app.route("/blog/<page>/")
+@bp.route("/blog/<page>/")
 def blog_page(page):
     results = mongo.db.blogs.find_one({"name": f"{page}.html"})
     if results is None:
@@ -223,7 +227,7 @@ def blog_page(page):
         )
 
 
-@app.route("/user/<user>/")
+@bp.route("/user/<user>/")
 def user_page(user):
     results = mongo.db.users.find_one({"username": user})
     if logged_in(session):
@@ -238,7 +242,7 @@ def user_page(user):
         )
 
 
-@app.route("/sign_up", methods=["GET", "POST"])
+@bp.route("/sign_up", methods=["GET", "POST"])
 def sign_up():
     if logged_in(session):
         flash("Already Logged In")
@@ -247,7 +251,7 @@ def sign_up():
         return render_template(
             "sign_up.html",
             login_status=None,
-            RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"],
+            RECAPTCHA_SITEKEY=current_app.config["RECAPTCHA_SITEKEY"],
         )
     elif request.method == "POST":
         if request.form["password"] == request.form["confirm_password"]:
@@ -270,9 +274,9 @@ def sign_up():
                 token = serializer.dumps(doc["email"], "email-confirm")
                 confirm_link = url_for("confirm_email", token=token, _external=True)
                 email_oauth.send_message(
-                    app.config["GMAIL_API_Creds"],
+                    current_app.config["GMAIL_API_Creds"],
                     email_oauth.create_message(
-                        f"Blogger101 <{app.config['EMAIL_SENDER']}>",
+                        f"Blogger101 <{current_app.config['EMAIL_SENDER']}>",
                         doc["email"],
                         "Blogger101 Email Confirmation",
                         f"Go to {confirm_link} to verify your email",
@@ -294,7 +298,7 @@ def sign_up():
             return redirect("/sign_up")
 
 
-@app.route("/confirm/<token>")
+@bp.route("/confirm/<token>")
 def confirm_email(token):
     email = serializer.loads(token, salt="email-confirm", max_age=3600)
     unverified_user = mongo.db.unverified_users.find_one({"email": email})
@@ -315,7 +319,7 @@ def confirm_email(token):
         abort(404)
 
 
-@app.route("/confirm_login/<token>")
+@bp.route("/confirm_login/<token>")
 def confirm_login(token):
     email = serializer.loads(token, salt="email-confirm", max_age=3600)
     user = mongo.db.users.find_one({"email": email})
@@ -333,13 +337,13 @@ def confirm_login(token):
         abort(404)
 
 
-@app.route("/verify_email/<token>")
+@bp.route("/verify_email/<token>")
 def verify_email(token):
     email = serializer.loads(token, salt="email-confirm", max_age=3600)
     return render_template("verify_email.html", login_status=None, email=email)
 
 
-@app.route("/login", methods=["GET", "POST"])
+@bp.route("/login", methods=["GET", "POST"])
 def login():
     if logged_in(session):
         flash("Already Logged In")
@@ -348,18 +352,22 @@ def login():
         return render_template(
             "login.html",
             login_status=None,
-            RECAPTCHA_SITEKEY=app.config["RECAPTCHA_SITEKEY"],
+            RECAPTCHA_SITEKEY=current_app.config["RECAPTCHA_SITEKEY"],
         )
     elif request.method == "POST":
         email = request.form.get("email").lower()
         password = request.form.get("password")
-        recaptcha_response = requests.post(
-            "https://www.google.com/recaptcha/api/siteverify",
-            params={
-                "secret": app.config["RECAPTCHA_SECRETKEY"],
-                "response": request.form.get("token"),
-            },
-        ).json()
+        recaptcha_response = (
+            {"score": 1}
+            if current_app.config["TESTING"]
+            else requests.post(
+                "https://www.google.com/recaptcha/api/siteverify",
+                params={
+                    "secret": current_app.config["RECAPTCHA_SECRETKEY"],
+                    "response": request.form.get("token"),
+                },
+            ).json()
+        )
 
         login_response = Auth.check_login(email, password)
         if login_response["error"]:
@@ -372,9 +380,9 @@ def login():
                 token = serializer.dumps(email, "email-confirm")
                 confirm_link = url_for("confirm_login", token=token, _external=True)
                 email_oauth.send_message(
-                    app.config["GMAIL_API_Creds"],
+                    current_app.config["GMAIL_API_Creds"],
                     email_oauth.create_message(
-                        f"Blogger101 <{app.config['EMAIL_SENDER']}>",
+                        f"Blogger101 <{current_app.config['EMAIL_SENDER']}>",
                         email,
                         "Blogger101 Login Confirmation",
                         f"Go to {confirm_link} to login to your account",
@@ -395,7 +403,7 @@ def login():
             return redirect("/login")
 
 
-@app.route("/logout")
+@bp.route("/logout")
 def logout():
     if logged_in(session):
         session["logged_in"] = None
@@ -406,10 +414,10 @@ def logout():
     return redirect("/")
 
 
-@app.route("/api/v1/blogs")
+@bp.route("/api/v1/blogs")
 def api_blogs():
     relative = request.args.get("relative", False)
-    to_return = []
+    output = []
     for blog in sorted(
         list(mongo.db.blogs.find({})),
         key=lambda date: datetime.datetime.strptime(
@@ -420,15 +428,15 @@ def api_blogs():
         blog["_id"] = str(blog["_id"])
         if not relative:
             blog["link"] = f"https://blogger-101.herokuapp.com/{blog['link']}"
-        to_return.append(blog)
-    return jsonify(to_return)
+        output.append(blog)
+    return jsonify(output)
 
 
-@app.route("/api/v1/post-blog", methods=["POST"])
+@bp.route("/api/v1/post-blog", methods=["POST"])
 def api_post_blog():
     title = request.form.get("blog_title")
     name = ("_".join(title.split(" "))).lower()
-    to_upload_image = app.config["ImgurObject"]._send_request(
+    to_upload_image = current_app.config["ImgurObject"]._send_request(
         "https://api/v1.imgur.com/3/image",
         method="POST",
         params={"image": base64.b64encode(request.files["file"].read())},
@@ -449,20 +457,26 @@ def api_post_blog():
     return redirect("/")
 
 
-@app.route("/api/v1/check-user", methods=["POST"])
+@bp.route("/api/v1/auth/check-user", methods=["POST"])
 def check_user():
     email = (request.json["email"]).lower()
     password = request.json["password"]
 
-    found = mongo.db.users.find_one({"email": email})
+    login_response = Auth.check_login(email, password)
+    if login_response["error"]:
+        return {
+            "found": False,
+            "message": login_response["message"],
+        }, status.USER_NOT_FOUND if login_response[
+            "message"
+        ] == "A User With That Email Was Not Found" else status.INCORRECT_PASSWORD
+    user = login_response["user"]
+    user["_id"] = str(user["_id"])
 
-    if flask_bcrypt.check_password_hash(found["password"], password):
-        return {"found": True, "user_found": found["username"]}
-    else:
-        return {"found": False}, status.USER_NOT_FOUND
+    return {"found": True, "user": user}
 
 
-@app.route("/api/v1/add-user", methods=["POST"])
+@bp.route("/api/v1/auth/add-user", methods=["POST"])
 def add_user():
     doc = {
         "first_name": request.json.get("first_name"),
@@ -489,7 +503,7 @@ def add_user():
     return {"success": True, "already": None}
 
 
-@app.route("/api/v1/add-comment", methods=["POST"])
+@bp.route("/api/v1/add-comment", methods=["POST"])
 def add_comment():
     blog = request.json["blog_title"]
     comment_type = request.json["type"]
@@ -524,7 +538,7 @@ def add_comment():
     return {"worked": True}
 
 
-@app.route("/api/v1/blog-comments/<blog_title>")
+@bp.route("/api/v1/blog-comments/<blog_title>")
 def get_comments(blog_title):
     blog = mongo.db.blogs.find_one({"title": blog_title})
     if blog is None:
@@ -554,7 +568,7 @@ def get_comments(blog_title):
     return jsonify(comment_tree)
 
 
-@app.errorhandler(HTTPException)
+@bp.errorhandler(HTTPException)
 def error_handling(error):
     flash("Page Not Found")
     return render_template(
@@ -565,7 +579,7 @@ def error_handling(error):
     )
 
 
-@app.context_processor
+@bp.context_processor
 def get_blogs():
     def find_blogs():
         return reversed(
@@ -581,6 +595,6 @@ def get_blogs():
     return dict(find_blogs=find_blogs)
 
 
-@app.context_processor
+@bp.context_processor
 def convert_string_to_json():
     return dict(str_to_json=lambda text: {"text": text})

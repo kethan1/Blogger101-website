@@ -13,6 +13,7 @@ from blogger101.app_extensions import (
     flask_cors,
 )
 from blogger101 import email_oauth
+from blogger101.routes import bp
 
 
 if "DYNO" in os.environ:
@@ -28,6 +29,7 @@ if "DYNO" in os.environ:
 else:
     config = dotenv_values()
 config["EMAIL_TOKEN"] = json.loads(config["EMAIL_TOKEN"])
+config["TESTING"] = False
 
 app_extensions.RECAPTCHA_SITEKEY = config["RECAPTCHA_SITEKEY"]
 
@@ -55,6 +57,6 @@ def create_app(test_config=None):
         app.config["EMAIL_TOKEN"]
     )
 
-    from blogger101 import routes
+    app.register_blueprint(bp)
 
     return app

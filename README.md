@@ -10,7 +10,7 @@ This is a simple blogging website similar to Medium.
 
 You may need to use `python3` and `pip3` instead of `python` and `pip` depending on your installation of Python. 
 
-Clone this repo and `cd` into it. Then run `pip install -r requirements.txt` to install the needed packages. After that, create an `.env` file in the following format:
+Clone this repo and then run `pip install -r requirements.txt` to install the needed packages. After that, create an `.env` file in the `blogger101` in the following format:
 
 ```
 IMGUR_ID=<Imgur ID API Key Here>
@@ -22,6 +22,6 @@ EMAIL_ADDRESS=<The email address to send the emails from>
 EMAIL_TOKEN=<The OAuth2 token from the gmail API. The token needs the scope of gmail.send>
 ```
 
-Then run `python app.py`. The website will be accessible on http://127.0.0.1:5000. 
+Then run `python run.py`. The website will be accessible on http://127.0.0.1:5000. 
 
 When deploying to Heroku, you do not need the `.env` file. Instead, add the `Imgur ID`, `MongoDB Connection URL`, `Secret Key`, `reCAPTCHA Sitekey`, `reCAPTCHA Secret`, `Email Address`, and `EMAIL Token` in the Heroku Config Vars, as `IMGUR_ID`, `MONGO_URI`, `SECRET_KEY`, `RECAPTCHA_SITEKEY`, `RECAPTCHA_SECRET`, `EMAIL_ADDRESS`, and `EMAIL_TOKEN`. 
