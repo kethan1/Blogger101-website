@@ -28,33 +28,22 @@ def app():
             ).decode(),
         }
     )
-    app_extensions.mongo.db.users.insert_many(
-        [
-            {
-                "first_name": "Joe",
-                "last_name": "Smoe",
-                "username": "JoeSmoe",
-                "email": "joe@smoe.com",
-                "password": app_extensions.flask_bcrypt.generate_password_hash(
-                    "Password123"
-                ).decode(),
-            },
-            {
-                "title": "Test Blog",
-                "user": "JoeSmoe",
-                "name": "Test_Blog.html",
-                "text": "`hi` and **bye**",
-                "link": "/blog/test_blog",
-                "date_released": datetime.datetime.now(datetime.timezone.utc).strftime(
-                    "%m/%d/%Y"
-                ),
-                "time_released": datetime.datetime.now(datetime.timezone.utc).strftime(
-                    "%H:%M:%S:%f"
-                ),
-                "comments": [],
-                "image": "",
-            },
-        ],
+    app_extensions.mongo.db.blogs.insert_one(
+        {
+            "title": "Test Blog",
+            "user": "JoeSmoe",
+            "name": "Test_Blog.html",
+            "text": "`hi` and **bye**",
+            "link": "/blog/test_blog",
+            "date_released": datetime.datetime.now(datetime.timezone.utc).strftime(
+                "%m/%d/%Y"
+            ),
+            "time_released": datetime.datetime.now(datetime.timezone.utc).strftime(
+                "%H:%M:%S:%f"
+            ),
+            "comments": [],
+            "image": "",
+        },
     )
 
     with app.app_context():
