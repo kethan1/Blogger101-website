@@ -10,10 +10,16 @@ sys.path.append(parent_dir)
 from blogger101 import create_app, app_extensions
 
 
+if "DYNO" not in os.environ:
+    MONGO_URI_TESTING = dotenv_values()["MONGO_URI_TESTING"]
+else:
+    MONGO_URI_TESTING = os.environ["MONGO_URI_TESTING"]
+
+
 @pytest.fixture()
 def app():
     app = create_app()
-    app.config.update({"TESTING": True, "MONGO_URI": dotenv_values()["MONGO_URI"]})
+    app.config.update({"TESTING": True, "MONGO_URI": MONGO_URI_TESTING})
 
     app_extensions.mongo.init_app(app)
 
