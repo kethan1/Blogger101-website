@@ -38,7 +38,6 @@ def create_app(test_config=None):
     global app
 
     app = Flask(__name__)
-    app.url_map.strict_slashes = False
 
     config.update({} if test_config is None else test_config)
 
