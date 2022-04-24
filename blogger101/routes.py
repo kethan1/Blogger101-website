@@ -1,6 +1,6 @@
 import datetime
 import base64
-from urllib.parse import quote
+import urllib.parse
 import os
 
 from flask import (
@@ -22,7 +22,7 @@ import requests
 
 from blogger101 import http_response_codes as status
 from blogger101 import email_oauth
-from blogger101.auth import Auth, logged_in
+from blogger101 import auth
 from blogger101.app_extensions import (
     mongo,
     flask_bcrypt,
@@ -37,23 +37,23 @@ bp = Blueprint("routes", __name__)
 def before_request():
     if "DYNO" in os.environ and request.url.startswith("http://"):
         url = request.url.replace("http://", "https://", 1)
-        return redirect(quote(url), code=301)
+        return redirect(urllib.parse.quote(url), code=301)
 
 
 @bp.route("/")
 def blogs():
     return render_template(
         "blogs.html",
-        login_status=session["logged_in"] if logged_in(session) else None,
+        login_status=session["logged_in"] if auth.logged_in(session) else None,
     )
 
 
 @bp.route("/myblogs")
 def myblogs():
-    if logged_in(session):
+    if auth.logged_in(session):
         return render_template(
             "myblogs.html",
-            login_status=session["logged_in"] if logged_in(session) else None,
+            login_status=session["logged_in"] if auth.logged_in(session) else None,
         )
     flash(
         Markup(
@@ -65,7 +65,7 @@ def myblogs():
 
 @bp.route("/delete/<title>")
 def delete_blog(title):
-    if logged_in(session):
+    if auth.logged_in(session):
         if (
             mongo.db.blogs.find_one(
                 {"title": title, "user": session["logged_in"]["username"]}
@@ -90,7 +90,7 @@ def delete_blog(title):
 
 @bp.route("/edit/<title>", methods=["GET", "POST"])
 def edit_blog(title):
-    if logged_in(session):
+    if auth.logged_in(session):
         if request.method == "GET":
             blog = mongo.db.blogs.find_one(
                 {"title": title, "user": session["logged_in"]["username"]}
@@ -102,7 +102,7 @@ def edit_blog(title):
                 "edit.html",
                 blog_title=title,
                 blog_content=blog["text"],
-                login_status=session["logged_in"] if logged_in(session) else None,
+                login_status=session["logged_in"] if auth.logged_in(session) else None,
                 RECAPTCHA_SITEKEY=current_app.config["RECAPTCHA_SITEKEY"],
             )
         elif request.method == "POST":
@@ -131,10 +131,10 @@ def edit_blog(title):
 
 @bp.route("/post_blog")
 def post_blog():
-    if logged_in(session):
+    if auth.logged_in(session):
         return render_template(
             "post_blog.html",
-            login_status=session["logged_in"] if logged_in(session) else None,
+            login_status=session["logged_in"] if auth.logged_in(session) else None,
             RECAPTCHA_SITEKEY=current_app.config["RECAPTCHA_SITEKEY"],
         )
     flash(
@@ -147,13 +147,13 @@ def post_blog():
 
 @bp.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
-    if logged_in(session):
+    if auth.logged_in(session):
         flash("Already Logged In")
         return render_template("/")
     if request.method == "GET":
         return render_template(
             "forgot_password.html",
-            login_status=session["logged_in"] if logged_in(session) else None,
+            login_status=session["logged_in"] if auth.logged_in(session) else None,
         )
     elif request.method == "POST":
         email = request.form.get("email")
@@ -182,7 +182,7 @@ def change_password_email_sent(token):
     email = serializer.loads(token, salt="email-confirm", max_age=3600)
     return render_template(
         "change_password_email_sent.html",
-        login_status=session["logged_in"] if logged_in(session) else None,
+        login_status=session["logged_in"] if auth.logged_in(session) else None,
         email=email,
     )
 
@@ -192,7 +192,7 @@ def change_password(token):
     if request.method == "GET":
         return render_template(
             "change_password.html",
-            login_status=session["logged_in"] if logged_in(session) else None,
+            login_status=session["logged_in"] if auth.logged_in(session) else None,
         )
     elif request.method == "POST":
         password_hash = serializer.loads(token, salt="change-password", max_age=3600)
@@ -230,7 +230,7 @@ def blog_page(page):
 @bp.route("/user/<user>/")
 def user_page(user):
     results = mongo.db.users.find_one({"username": user})
-    if logged_in(session):
+    if auth.logged_in(session):
         return render_template(
             "user_template.html",
             results_from_user=results,
@@ -244,7 +244,7 @@ def user_page(user):
 
 @bp.route("/sign_up", methods=["GET", "POST"])
 def sign_up():
-    if logged_in(session):
+    if auth.logged_in(session):
         flash("Already Logged In")
         return redirect("/")
     if request.method == "GET":
@@ -345,7 +345,7 @@ def verify_email(token):
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
-    if logged_in(session):
+    if auth.logged_in(session):
         flash("Already Logged In")
         return redirect("/")
     if request.method == "GET":
@@ -369,7 +369,7 @@ def login():
             ).json()
         )
 
-        login_response = Auth.check_login(email, password)
+        login_response = auth.check_login(email, password)
         if login_response["error"]:
             flash(login_response["message"])
             return redirect("/login")
@@ -405,7 +405,7 @@ def login():
 
 @bp.route("/logout")
 def logout():
-    if logged_in(session):
+    if auth.logged_in(session):
         session["logged_in"] = None
         flash("Successfully Logged Out")
     else:
@@ -427,25 +427,27 @@ def api_blogs():
     ):
         blog["_id"] = str(blog["_id"])
         if not relative:
-            blog["link"] = f"https://blogger-101.herokuapp.com/{blog['link']}"
+            blog["link"] = urllib.parse.urljoin("https://blogger-101.herokuapp.com", blog["link"])
         output.append(blog)
     return jsonify(output)
 
 
 @bp.route("/api/v1/post-blog", methods=["POST"])
 def api_post_blog():
-    title = request.form.get("blog_title")
-    name = ("_".join(title.split(" "))).lower()
+    title = request.form.get("title")
+    user = request.form.get("user")
+    blog_content = request.form.get("blog_content")
+    name = title.replace(" ", "_").lower()
     to_upload_image = current_app.config["ImgurObject"]._send_request(
-        "https://api/v1.imgur.com/3/image",
+        "https://api.imgur.com/3/image",
         method="POST",
         params={"image": base64.b64encode(request.files["file"].read())},
     )
     doc = {
         "title": title,
-        "user": request.form.get("user"),
+        "user": user,
         "name": f"{name}.html",
-        "text": request.form.get("blog_content"),
+        "text": blog_content,
         "link": f"/blog/{name}",
         "date_released": datetime.datetime.utcnow().strftime("%m/%d/%Y"),
         "time_released": datetime.datetime.utcnow().strftime("%H:%M:%S:%f"),
@@ -462,7 +464,7 @@ def check_user():
     email = (request.json["email"]).lower()
     password = request.json["password"]
 
-    login_response = Auth.check_login(email, password)
+    login_response = auth.check_login(email, password)
     if login_response["error"]:
         return {
             "found": False,
@@ -575,7 +577,7 @@ def error_handling(error):
         "error.html",
         error=error,
         code=error.code,
-        login_status=session["logged_in"] if logged_in(session) else None,
+        login_status=session["logged_in"] if auth.logged_in(session) else None,
     )
 
 
