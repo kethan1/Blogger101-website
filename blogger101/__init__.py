@@ -16,7 +16,7 @@ from blogger101 import email_oauth
 from blogger101.routes import bp
 
 
-if "DYNO" in os.environ:
+if "DYNO" in os.environ or "GITHUB_ACTIONS" in os.environ:
     config = {
         "IMGUR_ID": os.environ["IMGUR_ID"],
         "MONGO_URI": os.environ["MONGO_URI"],

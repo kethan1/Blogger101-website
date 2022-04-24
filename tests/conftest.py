@@ -10,7 +10,7 @@ sys.path.append(parent_dir)
 from blogger101 import create_app, app_extensions
 
 
-if "DYNO" not in os.environ:
+if "DYNO" not in os.environ and "GITHUB_ACTIONS" not in os.environ:
     MONGO_URI_TESTING = dotenv_values()["MONGO_URI_TESTING"]
 else:
     MONGO_URI_TESTING = os.environ["MONGO_URI_TESTING"]

@@ -29,4 +29,4 @@ jobs:
         RECAPTCHA_SECRETKEY: ${{ secrets.RECAPTCHA_SECRETKEY }}
         RECAPTCHA_SITEKEY: ${{ secrets.RECAPTCHA_SITEKEY }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DYNO: 1
+        GITHUB_ACTIONS: 1
