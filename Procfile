@@ -1,1 +1,1 @@
-web: gunicorn app:run --log-file=-
+web: gunicorn 'blogger101:create_app()' --log-file=-
