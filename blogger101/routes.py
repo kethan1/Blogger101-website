@@ -427,7 +427,9 @@ def api_blogs():
     ):
         blog["_id"] = str(blog["_id"])
         if not relative:
-            blog["link"] = urllib.parse.urljoin("https://blogger-101.herokuapp.com", blog["link"])
+            blog["link"] = urllib.parse.urljoin(
+                "https://blogger-101.herokuapp.com", blog["link"]
+            )
         output.append(blog)
     return jsonify(output)
 
@@ -489,20 +491,66 @@ def add_user():
             request.json.get("password")
         ).decode(),
     }
-    if mongo.db.users.find_one({"email": doc["email"]}) is not None:
-        return (
-            {"success": False, "already": "both"}
-            if mongo.db.users.find_one(
-                {"username": doc["username"], "email": doc["email"]}
-            )
-            is not None
-            else {"success": False, "already": "email"}
-        )
+    email_already_exists = mongo.db.users.find_one({"email": doc["email"]}) is not None
+    username_already_exists = (
+        mongo.db.users.find_one({"username": doc["username"]}) is not None
+    )
+    if email_already_exists or username_already_exists:
+        return {
+            "success": False,
+            "already": "both"
+            if email_already_exists and username_already_exists
+            else "email"
+            if email_already_exists
+            else "username",
+        }
 
-    if mongo.db.users.find_one({"username": doc["username"]}) is not None:
-        return {"success": False, "already": "username"}
     mongo.db.users.insert_one(doc)
     return {"success": True, "already": None}
+
+
+@bp.route("/api/v2/auth/add-user", methods=["POST"])
+def add_user_v2():
+    doc = {
+        "first_name": request.json.get("first_name"),
+        "last_name": request.json.get("last_name"),
+        "username": request.json.get("username"),
+        "email": request.json.get("email"),
+        "password": flask_bcrypt.generate_password_hash(
+            request.json.get("password")
+        ).decode(),
+    }
+    mobile_phone_uri = request.json.get("mobile_phone")
+    email_already_exists = mongo.db.users.find_one({"email": doc["email"]}) is not None
+    username_already_exists = (
+        mongo.db.users.find_one({"username": doc["username"]}) is not None
+    )
+    if email_already_exists or username_already_exists:
+        return {
+            "success": False,
+            "already": "both"
+            if email_already_exists and username_already_exists
+            else "email"
+            if email_already_exists
+            else "username",
+        }
+
+    mongo.db.unverified_users.insert_one(doc)
+
+    token = serializer.dumps(doc["email"], "email-confirm")
+    confirm_link = url_for("confirm_email", token=token, _external=True) if mobile_phone_uri is None else f"{mobile_phone_uri}/{token}"
+    email_oauth.send_message(
+        current_app.config["GMAIL_API_Creds"],
+        email_oauth.create_message(
+            f"Blogger101 <{current_app.config['EMAIL_SENDER']}>",
+            doc["email"],
+            "Blogger101 Email Confirmation",
+            f"Go to {confirm_link} to verify your email",
+            f"<a href='{confirm_link}'>Verify Email<a>",
+        ),
+    )
+
+    return {"success": True, "already": None, "email_verification_link": ""}
 
 
 @bp.route("/api/v1/add-comment", methods=["POST"])
