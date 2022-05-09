@@ -538,7 +538,7 @@ def add_user_v2():
     mongo.db.unverified_users.insert_one(doc)
 
     token = serializer.dumps(doc["email"], "email-confirm")
-    confirm_link = url_for("confirm_email", token=token, _external=True) if mobile_phone_uri is None else f"{mobile_phone_uri}/{token}"
+    confirm_link = url_for("confirm_email", token=token, _external=True) if mobile_phone_uri is None else f"{mobile_phone_uri}/email_verification/{token}"
     email_oauth.send_message(
         current_app.config["GMAIL_API_Creds"],
         email_oauth.create_message(
