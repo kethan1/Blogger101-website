@@ -303,8 +303,9 @@ def confirm_email(token):
     email = serializer.loads(token, salt="email-confirm", max_age=3600)
     unverified_user = mongo.db.unverified_users.find_one({"email": email})
     if unverified_user is not None:
-        mongo.db.users.insert_one(unverified_user)
         mongo.db.unverified_users.remove(unverified_user)
+        del unverified_user["_id"]
+        mongo.db.users.insert_one(unverified_user)
 
         session["logged_in"] = {
             "first_name": unverified_user["first_name"],
