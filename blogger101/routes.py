@@ -272,7 +272,7 @@ def sign_up():
                 is None
             ):
                 token = serializer.dumps(doc["email"], "email-confirm")
-                confirm_link = url_for("confirm_email", token=token, _external=True)
+                confirm_link = url_for("routes.confirm_email", token=token, _external=True)
                 email_oauth.send_message(
                     current_app.config["GMAIL_API_Creds"],
                     email_oauth.create_message(
