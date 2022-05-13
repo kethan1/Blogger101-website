@@ -548,10 +548,11 @@ def add_user_v2():
 
     token = serializer.dumps(doc["email"], "email-confirm")
     confirm_link = (
-        url_for("routes.confirm_email", token=token, _external=True)
-        if mobile_phone_uri is None
-        else f"{mobile_phone_uri}/email_verification/{token}"
+        f"https://blogger-101.herokuapp.com/email_verification/{token}"
+        if mobile_phone_uri
+        else url_for("routes.confirm_email", token=token, _external=True)
     )
+
     print(confirm_link)
     email_oauth.send_message(
         current_app.config["GMAIL_API_Creds"],
