@@ -15,6 +15,7 @@ from flask import (
     session,
     jsonify,
     url_for,
+    send_from_directory,
 )
 from bson.objectid import ObjectId
 from werkzeug.exceptions import HTTPException
@@ -38,6 +39,11 @@ def before_request():
     if "DYNO" in os.environ and request.url.startswith("http://"):
         url = request.url.replace("http://", "https://", 1)
         return redirect(urllib.parse.quote(url), code=301)
+
+
+@bp.route("/.well-known/assetlinks.json")
+def send_android_app_link_file():
+    return send_from_directory("static", "assetlinks.json")
 
 
 @bp.route("/")
@@ -272,7 +278,9 @@ def sign_up():
                 is None
             ):
                 token = serializer.dumps(doc["email"], "email-confirm")
-                confirm_link = url_for("routes.confirm_email", token=token, _external=True)
+                confirm_link = url_for(
+                    "routes.confirm_email", token=token, _external=True
+                )
                 email_oauth.send_message(
                     current_app.config["GMAIL_API_Creds"],
                     email_oauth.create_message(
@@ -539,7 +547,12 @@ def add_user_v2():
     mongo.db.unverified_users.insert_one(doc)
 
     token = serializer.dumps(doc["email"], "email-confirm")
-    confirm_link = url_for("routes.confirm_email", token=token, _external=True) if mobile_phone_uri is None else f"{mobile_phone_uri}/email_verification/{token}"
+    confirm_link = (
+        url_for("routes.confirm_email", token=token, _external=True)
+        if mobile_phone_uri is None
+        else f"{mobile_phone_uri}/email_verification/{token}"
+    )
+    print(confirm_link)
     email_oauth.send_message(
         current_app.config["GMAIL_API_Creds"],
         email_oauth.create_message(
@@ -551,7 +564,7 @@ def add_user_v2():
         ),
     )
 
-    return {"success": True, "already": None, "email_verification_link": ""}
+    return {"success": True, "already": None, "email_verification_link": confirm_link}
 
 
 @bp.route("/api/v1/add-comment", methods=["POST"])
