@@ -529,7 +529,7 @@ def add_user_v2():
             request.json.get("password")
         ).decode(),
     }
-    mobile_phone_uri = request.json.get("mobile_phone_uri")
+    mobile_phone = request.json.get("mobile_phone_uri")
     email_already_exists = mongo.db.users.find_one({"email": doc["email"]}) is not None
     username_already_exists = (
         mongo.db.users.find_one({"username": doc["username"]}) is not None
@@ -548,8 +548,8 @@ def add_user_v2():
 
     token = serializer.dumps(doc["email"], "email-confirm")
     confirm_link = (
-        f"https://blogger-101.herokuapp.com/email_verification/{token}"
-        if mobile_phone_uri
+        f"https://blogger-101.herokuapp.com/confirm/{token}"
+        if mobile_phone
         else url_for("routes.confirm_email", token=token, _external=True)
     )
 
