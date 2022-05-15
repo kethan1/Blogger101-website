@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head></head>
+<body>
+    <script>
+        function isPhone() {
+            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            return /android/i.test(userAgent) || (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream)
+        }
+
+        if (isPhone()) {
+            window.location.replace("{{ mobile_url }}");
+        } else {
+            window.location.replace("{{ fallback_url }}")
+        }
+    </script>
+</body>
+</html>

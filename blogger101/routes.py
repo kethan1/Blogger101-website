@@ -518,6 +518,11 @@ def add_user():
     return {"success": True, "already": None}
 
 
+@bp.route("/api/v2/redirect-to-mobile-app/")
+def redirect_to_mobile_app(url):
+    return render_template("redirect_to_mobile_app.html", mobile_url=request.args.get("mobile_url"), fallback_url=request.args.get("fallback_url"))
+
+
 @bp.route("/api/v2/auth/add-user", methods=["POST"])
 def add_user_v2():
     doc = {
@@ -529,6 +534,7 @@ def add_user_v2():
             request.json.get("password")
         ).decode(),
     }
+    mobile_phone_uri = request.json.get("mobile_phone_uri")
 
     email_already_exists = mongo.db.users.find_one({"email": doc["email"]}) is not None
     username_already_exists = (
@@ -547,9 +553,9 @@ def add_user_v2():
     mongo.db.unverified_users.insert_one(doc)
 
     token = serializer.dumps(doc["email"], "email-confirm")
-    confirm_link = url_for("routes.confirm_email", token=token, _external=True)
+    confirm_link_backup = url_for("routes.confirm_email", token=token, _external=True)
+    confirm_link = url_for("routes.redirect-to-mobile-app", mobile_url="{mobile_phone_uri}/{token}", fallback_url=confirm_link_backup, _external=True) if mobile_phone_uri else confirm_link_backup
 
-    print(confirm_link)
     email_oauth.send_message(
         current_app.config["GMAIL_API_Creds"],
         email_oauth.create_message(
