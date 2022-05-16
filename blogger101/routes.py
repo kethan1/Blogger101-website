@@ -555,7 +555,6 @@ def add_user_v2():
     token = serializer.dumps(doc["email"], "email-confirm")
     confirm_link_backup = url_for("routes.confirm_email", token=token, _external=True)
     confirm_link = url_for("routes.redirect_to_mobile_app", mobile_url=f"{mobile_phone_uri}/{token}", fallback_url=confirm_link_backup, _external=True) if mobile_phone_uri else confirm_link_backup
-    print(confirm_link)
 
     email_oauth.send_message(
         current_app.config["GMAIL_API_Creds"],
@@ -580,6 +579,7 @@ def confirm_email_api():
         del unverified_user["_id"]
         mongo.db.unverified_users.delete_one(unverified_user)
         mongo.db.users.insert_one(unverified_user)
+        del unverified_user["_id"]
         return {"success": True, "user": unverified_user}
     return {"success": False}, status.USER_NOT_FOUND
 
