@@ -168,7 +168,7 @@ def forgot_password():
             flash("Email not found")
             return redirect("/forgot_password")
         token = serializer.dumps(user["password"], "change-password")
-        confirm_link = url_for("change_password", token=token, _external=True)
+        confirm_link = url_for("routes.change_password", token=token, _external=True)
         email_oauth.send_message(
             current_app.config["GMAIL_API_Creds"],
             email_oauth.create_message(
@@ -185,7 +185,7 @@ def forgot_password():
 
 @bp.route("/change_password_email_sent/<token>")
 def change_password_email_sent(token):
-    email = serializer.loads(token, salt="email-confirm", max_age=3600)
+    email = serializer.loads(token, salt="change-password", max_age=3600)
     return render_template(
         "change_password_email_sent.html",
         login_status=session["logged_in"] if auth.logged_in(session) else None,
@@ -387,7 +387,7 @@ def login():
         if flask_bcrypt.check_password_hash(user["password"], password):
             if recaptcha_response["score"] < 0.5:
                 token = serializer.dumps(email, "email-confirm")
-                confirm_link = url_for("confirm_login", token=token, _external=True)
+                confirm_link = url_for("routes.confirm_login", token=token, _external=True)
                 email_oauth.send_message(
                     current_app.config["GMAIL_API_Creds"],
                     email_oauth.create_message(
@@ -518,7 +518,7 @@ def add_user():
     return {"success": True, "already": None}
 
 
-@bp.route("/api/v2/redirect-to-mobile-app")
+@bp.route("/api/v1/redirect-to-mobile-app")
 def redirect_to_mobile_app():
     return render_template("redirect_to_mobile_app.html", mobile_url=request.args.get("mobile_url"), fallback_url=request.args.get("fallback_url"))
 
@@ -581,6 +581,46 @@ def confirm_email_api():
         mongo.db.users.insert_one(unverified_user)
         del unverified_user["_id"]
         return {"success": True, "user": unverified_user}
+    return {"success": False}, status.USER_NOT_FOUND
+
+
+@bp.route("/api/v1/auth/change-password-email", methods=["POST"])
+def change_password_email_api():
+    email = request.json.get("email")
+    mobile_phone_uri = request.json.get("mobile_phone_uri")
+    user = mongo.db.users.find_one({"email": email})
+    if user is not None:
+        token = serializer.dumps(email, "email-confirm")
+        confirm_link_backup = url_for("routes.confirm_email", token=token, _external=True)
+        confirm_link = url_for("routes.redirect_to_mobile_app", mobile_url=f"{mobile_phone_uri}/{token}", fallback_url=confirm_link_backup, _external=True) if mobile_phone_uri else confirm_link_backup
+
+        email_oauth.send_message(
+            current_app.config["GMAIL_API_Creds"],
+            email_oauth.create_message(
+                f"Blogger101 <{current_app.config['EMAIL_SENDER']}>",
+                email,
+                "Blogger101 Email Confirmation",
+                f"Go to {confirm_link} to verify your email",
+                f"<a href='{confirm_link}'>Verify Email<a>",
+            ),
+        )
+        return {"success": True}
+    return {"success": False}, status.USER_NOT_FOUND
+
+
+@bp.route("/api/v1/auth/change-password", methods=["POST"])
+def change_password_api():
+    token = request.json.get("token")
+    new_password = flask_bcrypt.generate_password_hash(
+            request.json.get("new_password")
+    ).decode()
+    email = serializer.loads(token, salt="email-confirm", max_age=3600)
+    user = mongo.db.users.find_one({"email": email})
+    if user is not None:
+        del user["_id"]
+        mongo.db.users.update_one(
+            {"email": email}, {"password": new_password, "user": user}
+        )
     return {"success": False}, status.USER_NOT_FOUND
 
 

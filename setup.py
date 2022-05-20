@@ -3,7 +3,8 @@ from setuptools import find_packages, setup
 with open("README.md", "r") as f:
     readme = f.read()
 
-REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
+with open("requirements.txt") as requirements_file:
+    REQUIREMENTS = [req.strip() for req in requirements_file.readlines()]
 
 setup(
     name="Blogger101",
