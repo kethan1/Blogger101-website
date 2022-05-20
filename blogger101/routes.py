@@ -619,7 +619,7 @@ def change_password_api():
     if user is not None:
         del user["_id"]
         mongo.db.users.update_one(
-            {"email": email}, {"password": new_password, "user": user}
+            {"email": email}, {"$set": {"password": new_password, "user": user}}
         )
     return {"success": False}, status.USER_NOT_FOUND
 
