@@ -387,7 +387,9 @@ def login():
         if flask_bcrypt.check_password_hash(user["password"], password):
             if recaptcha_response["score"] < 0.5:
                 token = serializer.dumps(email, "email-confirm")
-                confirm_link = url_for("routes.confirm_login", token=token, _external=True)
+                confirm_link = url_for(
+                    "routes.confirm_login", token=token, _external=True
+                )
                 email_oauth.send_message(
                     current_app.config["GMAIL_API_Creds"],
                     email_oauth.create_message(
@@ -520,7 +522,11 @@ def add_user():
 
 @bp.route("/api/v1/redirect-to-mobile-app")
 def redirect_to_mobile_app():
-    return render_template("redirect_to_mobile_app.html", mobile_url=request.args.get("mobile_url"), fallback_url=request.args.get("fallback_url"))
+    return render_template(
+        "redirect_to_mobile_app.html",
+        mobile_url=request.args.get("mobile_url"),
+        fallback_url=request.args.get("fallback_url"),
+    )
 
 
 @bp.route("/api/v2/auth/add-user", methods=["POST"])
@@ -554,7 +560,16 @@ def add_user_v2():
 
     token = serializer.dumps(doc["email"], "email-confirm")
     confirm_link_backup = url_for("routes.confirm_email", token=token, _external=True)
-    confirm_link = url_for("routes.redirect_to_mobile_app", mobile_url=f"{mobile_phone_uri}/{token}", fallback_url=confirm_link_backup, _external=True) if mobile_phone_uri else confirm_link_backup
+    confirm_link = (
+        url_for(
+            "routes.redirect_to_mobile_app",
+            mobile_url=f"{mobile_phone_uri}/{token}",
+            fallback_url=confirm_link_backup,
+            _external=True,
+        )
+        if mobile_phone_uri
+        else confirm_link_backup
+    )
 
     email_oauth.send_message(
         current_app.config["GMAIL_API_Creds"],
@@ -591,8 +606,19 @@ def change_password_email_api():
     user = mongo.db.users.find_one({"email": email})
     if user is not None:
         token = serializer.dumps(email, "email-confirm")
-        confirm_link_backup = url_for("routes.confirm_email", token=token, _external=True)
-        confirm_link = url_for("routes.redirect_to_mobile_app", mobile_url=f"{mobile_phone_uri}/{token}", fallback_url=confirm_link_backup, _external=True) if mobile_phone_uri else confirm_link_backup
+        confirm_link_backup = url_for(
+            "routes.confirm_email", token=token, _external=True
+        )
+        confirm_link = (
+            url_for(
+                "routes.redirect_to_mobile_app",
+                mobile_url=f"{mobile_phone_uri}/{token}",
+                fallback_url=confirm_link_backup,
+                _external=True,
+            )
+            if mobile_phone_uri
+            else confirm_link_backup
+        )
 
         email_oauth.send_message(
             current_app.config["GMAIL_API_Creds"],
@@ -612,7 +638,7 @@ def change_password_email_api():
 def change_password_api():
     token = request.json.get("token")
     new_password = flask_bcrypt.generate_password_hash(
-            request.json.get("new_password")
+        request.json.get("new_password")
     ).decode()
     email = serializer.loads(token, salt="email-confirm", max_age=3600)
     user = mongo.db.users.find_one({"email": email})
