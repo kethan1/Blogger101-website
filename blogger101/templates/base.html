@@ -32,7 +32,7 @@
         {% with messages = get_flashed_messages() %} {% if messages %} {% for message in messages %}
         <script>
             M.toast({
-                html: '<span>{{ message }}</span><button class="btn-flat toast-action" style="color: white;" onclick="M.Toast.dismissAll();">X</button>',
+                html: '<span>{{ message }}</span><button class="btn-flat toast-action" style="color: white;" onclick="M.Toast.dismissAll();"><i class="material-icons">close</i></button>',
                 classes: 'rounded'
             })
         </script>
@@ -77,7 +77,7 @@
                         {% endblock %}
                         {% endif %}
                         {% if login_status != None %}
-                        <li><a style="color: white;" href="/logout">Sign Out</a></li>
+                        <li><a style="color: white;" href="/logout">Logout</a></li>
                         {% endif %}
                     </ul>
 
@@ -112,7 +112,7 @@
         {{ self.login_link_nav() }}
         {% endif %}
         {% if login_status != None %}
-        <li><a style="color: black;" href="/logout">Sign Out</a></li>
+        <li><a style="color: black;" href="/logout">Logout</a></li>
         {% endif %}
     </ul>
     {% endblock %}

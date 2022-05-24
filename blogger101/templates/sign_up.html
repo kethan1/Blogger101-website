@@ -29,27 +29,29 @@
     <form id="signup-form" method="POST" style="display: inline-block; text-align: center; width: 100%">
         <input type="hidden" name="token" id="token">
         <div style="border: 2px solid gray; border-radius: 0.5vw; text-align: center;">
-            <div class="input-field">
-                <i class="material-icons prefix unselectable">account_circle</i>
-                <input id="first_name" type="text" name="first_name" required>
-                <label for="first_name">First Name</label>
+            <div style="display: flex; flex-direction: row; padding-right: 1%">
+                <div class="input-field" style="width: 50%; display: inline-block">
+                    <i class="material-icons prefix unselectable">account_circle</i>
+                    <input id="first_name" type="text" name="first_name" required>
+                    <label for="first_name">First Name</label>
+                </div>
+                <div class="input-field" style="width: 50%; display: inline-block">
+                    <i class="material-icons prefix unselectable">account_circle</i>
+                    <input id="last_name" type="text" name="last_name" required>
+                    <label for="last_name">Last Name</label>
+                </div>
             </div>
-            <div class="input-field">
-                <i class="material-icons prefix unselectable">account_circle</i>
-                <input id="last_name" type="text" name="last_name" required>
-                <label for="last_name">Last Name</label>
-            </div>
-            <div class="input-field">
+            <div class="input-field" style="padding-right: 1%">
                 <i class="material-icons prefix unselectable">account_circle</i>
                 <input id="username" type="text" name="username" required>
                 <label for="username">Username</label>
             </div>
-            <div class="input-field">
+            <div class="input-field" style="padding-right: 1%">
                 <i class="material-icons prefix unselectable">email</i>
                 <input id="email" class=" validate" type="email" name="email" required>
                 <label for="email">Email</label>
             </div>
-            <div class="input-field">
+            <div class="input-field" style="padding-right: 1%">
                 <a onclick="ShowPassword('password')"><i
                         class="required unselectable postfix mdi mdi-arrow-right material-icons"
                         style="color: black; padding-top: 10px;">remove_red_eye</i></a>
@@ -59,7 +61,7 @@
                     autocomplete="new-password" required>
                 <label for="password">Password</label>
             </div>
-            <div class="input-field">
+            <div class="input-field" style="padding-right: 1%">
                 <a onclick="ShowPassword('confirm_password')"><i
                         class="required unselectable postfix mdi mdi-arrow-right material-icons"
                         style="color: black; padding-top: 10px;">remove_red_eye</i></a>
