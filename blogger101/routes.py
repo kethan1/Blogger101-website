@@ -446,7 +446,7 @@ def api_blogs():
 
 
 @bp.route("/api/v1/post-blog", methods=["POST"])
-def api_post_blog():
+def post_blog_api():
     title = request.form.get("title")
     user = request.form.get("user")
     blog_content = request.form.get("blog_content")
@@ -469,7 +469,7 @@ def api_post_blog():
     }
 
     mongo.db.blogs.insert_one(doc)
-    return redirect("/")
+    return {"success": True}
 
 
 @bp.route("/api/v1/auth/check-user", methods=["POST"])
@@ -713,6 +713,31 @@ def get_comments(blog_title):
             )
         comment_tree.append(all_comments)
     return jsonify(comment_tree)
+
+
+@bp.route("/api/v1/delete-blog")
+def delete_blog_api():
+    title = request.args.get("title")
+    user = request.args.get("user")
+    if mongo.db.blogs.find_one({"title": title, "user": user}) is not None:
+        mongo.db.blogs.delete_one({"title": title, "user": user})
+        return {"success": True}
+    return {"success": False, "message": "The Blog Was Not Found"}
+
+
+@bp.route("/api/v1/update-blog", methods=["POST"])
+def update_blog():
+    title = request.json.get("title")
+    old_title = request.json.get("old_title")
+    user = request.json.get("user")
+    blog_content = request.json.get("blog_content")
+    name = title.replace(" ", "_").lower()
+    mongo.db.blogs.update_one(
+        {"title": old_title, "user": user},
+        {"$set": {"title": title, "blog_content": blog_content, name: f"{name}.html"}},
+    )
+
+    return {"success": True}
 
 
 @bp.errorhandler(HTTPException)
