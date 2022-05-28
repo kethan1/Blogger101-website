@@ -734,7 +734,7 @@ def update_blog():
     name = title.replace(" ", "_").lower()
     mongo.db.blogs.update_one(
         {"title": old_title, "user": user},
-        {"$set": {"title": title, "blog_content": blog_content, name: f"{name}.html"}},
+        {"$set": {"title": title, "text": blog_content, "name": f"{name}.html"}},
     )
 
     return {"success": True}
